@@ -1,0 +1,369 @@
+<div class="min-h-screen bg-gray-50">
+  <div *ngIf="!(loading$ | async); else loadingTemplate">
+    <div *ngIf="(product$ | async) as product" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      
+      <!-- Breadcrumb -->
+      <nav class="flex mb-8" aria-label="Breadcrumb">
+        <ol class="inline-flex items-center space-x-1 md:space-x-3">
+          <li class="inline-flex items-center">
+            <a routerLink="/" class="text-gray-700 hover:text-primary-600">Home</a>
+          </li>
+          <li>
+            <div class="flex items-center">
+              <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+              </svg>
+              <a routerLink="/products" class="ml-1 text-gray-700 hover:text-primary-600">Products</a>
+            </div>
+          </li>
+          <li aria-current="page">
+            <div class="flex items-center">
+              <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+              </svg>
+              <span class="ml-1 text-gray-500">{{product.name}}</span>
+            </div>
+          </li>
+        </ol>
+      </nav>
+
+      <!-- Product Detail -->
+      <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 p-8">
+          
+          <!-- Product Images -->
+          <div>
+            <!-- Main Image -->
+            <div class="mb-4 aspect-square overflow-hidden rounded-lg bg-gray-100">
+              <img 
+                [src]="product.images[selectedImage].src || 'https://placeholder-image-service.onrender.com/image/800x800?prompt=Product detail image showing high quality view of item&id=detail-001&customer_id=cus_TA1YAkwFiIX1gw'" 
+                [alt]="'Large view of ' + product.name + ' showing product details'"
+                class="w-full h-full object-cover"
+              />
+            </div>
+
+            <!-- Thumbnail Images -->
+            <div *ngIf="product.images.length > 1" class="grid grid-cols-4 gap-2">
+              <button 
+                *ngFor="let image of product.images; let i = index"
+                (click)="selectImage(i)"
+                [class.ring-2]="selectedImage === i"
+                [class.ring-primary-600]="selectedImage === i"
+                class="aspect-square overflow-hidden rounded-md bg-gray-100 hover:opacity-75 transition"
+              >
+                <img 
+                  [src]="image.src" 
+                  [alt]="'Thumbnail view of ' + product.name + ' from angle ' + (i + 1)"
+                  class="w-full h-full object-cover"
+                />
+              </button>
+            </div>
+          </div>
+
+          <!-- Product Info -->
+          <div class="flex flex-col">
+            <!-- Title -->
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">{{product.name}}</h1>
+
+            <!-- Rating -->
+            <div class="flex items-center mb-4">
+              <div class="flex text-yellow-400">
+                <svg *ngFor="let star of [1,2,3,4,5]" 
+                     class="w-5 h-5"
+                     [class.fill-current]="star <= +product.average_rating"
+                     [class.text-gray-300]="star > +product.average_rating"
+                     viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                </svg>
+              </div>
+              <span class="ml-2 text-sm text-gray-600">{{product.average_rating}} ({{product.review_count}} reviews)</span>
+            </div>
+
+            <!-- Price -->
+            <div class="flex items-baseline space-x-3 mb-6">
+              <span *ngIf="isOnSale(product)" class="text-3xl font-bold text-red-600">
+                ${{getCurrentPrice(product)}}
+              </span>
+              <span 
+                [class.text-3xl]="!isOnSale(product)"
+                [class.font-bold]="!isOnSale(product)"
+                [class.text-gray-900]="!isOnSale(product)"
+                [class.text-xl]="isOnSale(product)"
+                [class.text-gray-500]="isOnSale(product)"
+                [class.line-through]="isOnSale(product)"
+              >
+                ${{getRegularPrice(product)}}
+              </span>
+              <span *ngIf="isOnSale(product)" class="bg-red-100 text-red-800 text-xs font-semibold px-2.5 py-0.5 rounded">
+                SALE
+              </span>
+            </div>
+
+            <!-- Stock Status -->
+            <div class="mb-6">
+              <span 
+                [class.text-green-600]="getStockStatus(product) === 'instock'"
+                [class.text-red-600]="getStockStatus(product) === 'outofstock'"
+                [class.text-yellow-600]="getStockStatus(product) === 'onbackorder'"
+                class="font-semibold"
+              >
+                <span *ngIf="getStockStatus(product) === 'instock'">In Stock</span>
+                <span *ngIf="getStockStatus(product) === 'outofstock'">Out of Stock</span>
+                <span *ngIf="getStockStatus(product) === 'onbackorder'">Available for Pre-order</span>
+              </span>
+            </div>
+
+            <!-- Short Description -->
+            <div class="mb-6 text-gray-600" [innerHTML]="product.short_description"></div>
+
+            <!-- Variable Product Attributes -->
+            <div *ngIf="product.type === 'variable' && product.attributes.length > 0" class="mb-6">
+              <div *ngFor="let attribute of product.attributes" class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">{{attribute.name}}</label>
+                <select 
+                  [(ngModel)]="selectedAttributes[attribute.name]"
+                  (change)="onAttributeChange(attribute.name, selectedAttributes[attribute.name])"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500"
+                >
+                  <option value="">Select {{attribute.name}}</option>
+                  <option *ngFor="let option of attribute.options" [value]="option">{{option}}</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Quantity Selector -->
+            <div class="mb-6">
+              <label class="block text-sm font-medium text-gray-700 mb-2">Quantity</label>
+              <div class="flex items-center space-x-3">
+                <button 
+                  (click)="decrementQuantity()"
+                  class="w-10 h-10 border border-gray-300 rounded-md hover:bg-gray-50 transition"
+                >
+                  <span class="text-xl">−</span>
+                </button>
+                <input 
+                  type="number" 
+                  [(ngModel)]="quantity"
+                  min="1"
+                  class="w-20 px-3 py-2 text-center border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500"
+                />
+                <button 
+                  (click)="incrementQuantity()"
+                  class="w-10 h-10 border border-gray-300 rounded-md hover:bg-gray-50 transition"
+                >
+                  <span class="text-xl">+</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="space-y-3">
+              <button 
+                (click)="addToCart(product)"
+                [disabled]="getStockStatus(product) === 'outofstock'"
+                class="w-full bg-primary-600 text-white py-3 rounded-md hover:bg-primary-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed font-semibold"
+              >
+                <span *ngIf="getStockStatus(product) === 'instock'">Add to Cart</span>
+                <span *ngIf="getStockStatus(product) === 'outofstock'">Out of Stock</span>
+                <span *ngIf="getStockStatus(product) === 'onbackorder'">Pre-order Now</span>
+              </button>
+
+              <button 
+                (click)="toggleWishlist(product)"
+                class="w-full border-2 border-primary-600 text-primary-600 py-3 rounded-md hover:bg-primary-50 transition font-semibold"
+              >
+                <span *ngIf="!isInWishlist(product.id)">Add to Wishlist</span>
+                <span *ngIf="isInWishlist(product.id)">Remove from Wishlist</span>
+              </button>
+            </div>
+
+            <!-- Product Meta -->
+            <div class="mt-8 pt-8 border-t border-gray-200">
+              <div class="space-y-2 text-sm">
+                <div class="flex">
+                  <span class="text-gray-500 w-24">SKU:</span>
+                  <span class="text-gray-900">{{product.sku || 'N/A'}}</span>
+                </div>
+                <div *ngIf="product.categories.length > 0" class="flex">
+                  <span class="text-gray-500 w-24">Categories:</span>
+                  <span class="text-gray-900">
+                    <ng-container *ngFor="let c of product.categories; let last = last">
+                      {{c.name}}{{!last ? ', ' : ''}}
+                    </ng-container>
+                  </span>
+                </div>
+                <div *ngIf="product.tags.length > 0" class="flex">
+                  <span class="text-gray-500 w-24">Tags:</span>
+                  <span class="text-gray-900">
+                    <ng-container *ngFor="let t of product.tags; let last = last">
+                      {{t.name}}{{!last ? ', ' : ''}}
+                    </ng-container>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabs Section -->
+        <div class="border-t border-gray-200">
+          <!-- Tab Navigation -->
+          <div class="flex border-b border-gray-200">
+            <button 
+              (click)="setActiveTab('description')"
+              [class.border-primary-600]="activeTab === 'description'"
+              [class.text-primary-600]="activeTab === 'description'"
+              [class.border-transparent]="activeTab !== 'description'"
+              [class.text-gray-500]="activeTab !== 'description'"
+              class="px-8 py-4 border-b-2 font-medium hover:text-primary-600 transition"
+            >
+              Description
+            </button>
+            <button 
+              (click)="setActiveTab('reviews')"
+              [class.border-primary-600]="activeTab === 'reviews'"
+              [class.text-primary-600]="activeTab === 'reviews'"
+              [class.border-transparent]="activeTab !== 'reviews'"
+              [class.text-gray-500]="activeTab !== 'reviews'"
+              class="px-8 py-4 border-b-2 font-medium hover:text-primary-600 transition"
+            >
+              Reviews ({{product.review_count}})
+            </button>
+            <button 
+              (click)="setActiveTab('additional')"
+              [class.border-primary-600]="activeTab === 'additional'"
+              [class.text-primary-600]="activeTab === 'additional'"
+              [class.border-transparent]="activeTab !== 'additional'"
+              [class.text-gray-500]="activeTab !== 'additional'"
+              class="px-8 py-4 border-b-2 font-medium hover:text-primary-600 transition"
+            >
+              Additional Info
+            </button>
+          </div>
+
+          <!-- Tab Content -->
+          <div class="p-8">
+            <!-- Description Tab -->
+            <div *ngIf="activeTab === 'description'" class="prose max-w-none" [innerHTML]="product.description"></div>
+
+            <!-- Reviews Tab -->
+            <div *ngIf="activeTab === 'reviews'">
+              <!-- Reviews List -->
+              <div *ngIf="reviews.length > 0; else noReviews" class="space-y-6 mb-8">
+                <div *ngFor="let review of reviews" class="border-b border-gray-200 pb-6">
+                  <div class="flex items-center mb-2">
+                    <div class="flex text-yellow-400">
+                      <svg *ngFor="let star of [1,2,3,4,5]" 
+                           class="w-4 h-4"
+                           [class.fill-current]="star <= +review.rating"
+                           [class.text-gray-300]="star > +review.rating"
+                           viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                      </svg>
+                    </div>
+                    <span class="ml-2 text-sm font-semibold text-gray-900">{{review.author}}</span>
+                    <span *ngIf="review.verified" class="ml-2 text-xs text-green-600">Verified Purchase</span>
+                  </div>
+                  <p class="text-sm text-gray-500 mb-2">{{review.date | date}}</p>
+                  <p class="text-gray-700">{{review.content}}</p>
+                </div>
+              </div>
+
+              <ng-template #noReviews>
+                <p class="text-gray-500 mb-8">No reviews yet. Be the first to review this product!</p>
+              </ng-template>
+
+              <!-- Add Review Form -->
+              <div class="bg-gray-50 p-6 rounded-lg">
+                <h3 class="text-lg font-semibold mb-4">Write a Review</h3>
+                <form (ngSubmit)="submitReview(product)">
+                  <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Rating</label>
+                    <select 
+                      [(ngModel)]="newReview.rating"
+                      name="rating"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500"
+                    >
+                      <option [value]="5">5 Stars</option>
+                      <option [value]="4">4 Stars</option>
+                      <option [value]="3">3 Stars</option>
+                      <option [value]="2">2 Stars</option>
+                      <option [value]="1">1 Star</option>
+                    </select>
+                  </div>
+                  <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Your Review</label>
+                    <textarea 
+                      [(ngModel)]="newReview.content"
+                      name="content"
+                      rows="4"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500"
+                      placeholder="Share your thoughts about this product..."
+                    ></textarea>
+                  </div>
+                  <button 
+                    type="submit"
+                    class="bg-primary-600 text-white px-6 py-2 rounded-md hover:bg-primary-700 transition"
+                  >
+                    Submit Review
+                  </button>
+                </form>
+              </div>
+            </div>
+
+            <!-- Additional Info Tab -->
+            <div *ngIf="activeTab === 'additional'">
+              <table class="w-full">
+                <tbody>
+                  <tr class="border-b border-gray-200">
+                    <td class="py-3 text-gray-500 w-1/4">Weight</td>
+                    <td class="py-3 text-gray-900">{{product.weight || 'N/A'}}</td>
+                  </tr>
+                  <tr class="border-b border-gray-200">
+                    <td class="py-3 text-gray-500">Dimensions</td>
+                    <td class="py-3 text-gray-900">
+                      {{product.dimensions?.length || 'N/A'}} × {{product.dimensions?.width || 'N/A'}} × {{product.dimensions?.height || 'N/A'}}
+                    </td>
+                  </tr>
+                  <tr *ngFor="let attr of product.attributes" class="border-b border-gray-200">
+                    <td class="py-3 text-gray-500">{{attr.name}}</td>
+                    <td class="py-3 text-gray-900">{{attr.options.join(', ')}}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Related Products -->
+      <div *ngIf="relatedProducts.length > 0" class="mt-12">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">Related Products</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <app-product-card 
+            *ngFor="let relatedProduct of relatedProducts" 
+            [product]="relatedProduct">
+          </app-product-card>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Template -->
+  <ng-template #loadingTemplate>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div class="animate-pulse">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div class="aspect-square bg-gray-300 rounded-lg"></div>
+          <div class="space-y-4">
+            <div class="h-8 bg-gray-300 rounded w-3/4"></div>
+            <div class="h-6 bg-gray-300 rounded w-1/4"></div>
+            <div class="h-10 bg-gray-300 rounded w-1/3"></div>
+            <div class="h-4 bg-gray-300 rounded"></div>
+            <div class="h-4 bg-gray-300 rounded w-5/6"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-template>
+</div>

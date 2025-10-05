@@ -1,0 +1,54 @@
+<footer class="bg-gray-900 text-white mt-auto">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+      <!-- About -->
+      <div>
+        <h3 class="text-lg font-semibold mb-4">About WooShop</h3>
+        <p class="text-gray-400 text-sm">
+          Your trusted e-commerce destination for quality products at great prices.
+        </p>
+      </div>
+
+      <!-- Quick Links -->
+      <div>
+        <h3 class="text-lg font-semibold mb-4">Quick Links</h3>
+        <ul class="space-y-2 text-sm">
+          <li><a routerLink="/products" class="text-gray-400 hover:text-white transition">Products</a></li>
+          <li><a routerLink="/cart" class="text-gray-400 hover:text-white transition">Cart</a></li>
+          <li><a routerLink="/wishlist" class="text-gray-400 hover:text-white transition">Wishlist</a></li>
+          <li><a routerLink="/account/orders" class="text-gray-400 hover:text-white transition">Orders</a></li>
+        </ul>
+      </div>
+
+      <!-- Customer Service -->
+      <div>
+        <h3 class="text-lg font-semibold mb-4">Customer Service</h3>
+        <ul class="space-y-2 text-sm">
+          <li><a href="#" class="text-gray-400 hover:text-white transition">Contact Us</a></li>
+          <li><a href="#" class="text-gray-400 hover:text-white transition">Shipping Info</a></li>
+          <li><a href="#" class="text-gray-400 hover:text-white transition">Returns</a></li>
+          <li><a href="#" class="text-gray-400 hover:text-white transition">FAQ</a></li>
+        </ul>
+      </div>
+
+      <!-- Newsletter -->
+      <div>
+        <h3 class="text-lg font-semibold mb-4">Newsletter</h3>
+        <p class="text-gray-400 text-sm mb-4">Subscribe to get updates on new products and offers.</p>
+        <form class="flex">
+          <input type="email" placeholder="Your email" 
+                 class="flex-1 px-4 py-2 rounded-l-md text-gray-900 focus:outline-none">
+          <button type="submit" 
+                  class="bg-primary-600 px-4 py-2 rounded-r-md hover:bg-primary-700 transition">
+            Subscribe
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Bottom Bar -->
+    <div class="border-t border-gray-800 mt-8 pt-8 text-center text-sm text-gray-400">
+      <p>&copy; {{currentYear}} WooShop. All rights reserved.</p>
+    </div>
+  </div>
+</footer>

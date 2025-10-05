@@ -18,7 +18,7 @@
           "builder": "@angular/build:application",
           "options": {
             "outputPath": {
-              "base": "dist/ng-wcommerce"
+              "base": "dist/ngw-commerce"
             },
             "index": "src/index.html",
             "polyfills": [
