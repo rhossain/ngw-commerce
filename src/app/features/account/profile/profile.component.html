@@ -5,7 +5,7 @@
       <!-- Sidebar Navigation -->
       <div class="lg:col-span-1">
         <div class="bg-white rounded-lg shadow-md overflow-hidden">
-          <div class="p-6 bg-primary-600 text-white">
+          <div class="p-6 bg-blue-400 text-white">
             <div class="flex items-center">
               <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center">
                 <svg class="w-10 h-10 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -140,7 +140,7 @@
               <button 
                 type="submit"
                 [disabled]="isUpdatingProfile"
-                class="px-6 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition disabled:opacity-50"
+                class="px-6 py-2 bg-blue-400 text-white rounded-md hover:bg-blue-500 transition disabled:opacity-50"
               >
                 <span *ngIf="!isUpdatingProfile">Save Changes</span>
                 <span *ngIf="isUpdatingProfile">Saving...</span>
@@ -212,7 +212,7 @@
                 <button 
                   type="submit"
                   [disabled]="isChangingPassword"
-                  class="px-6 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition disabled:opacity-50"
+                  class="px-6 py-2 bg-blue-400 text-white rounded-md hover:bg-blue-500 transition disabled:opacity-50"
                 >
                   <span *ngIf="!isChangingPassword">Update Password</span>
                   <span *ngIf="isChangingPassword">Updating...</span>

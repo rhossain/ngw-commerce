@@ -458,4 +458,19 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     }
     return product.stock_status;
   }
+
+  canAddToCart(product: Product): boolean {
+    // Check if product is out of stock
+    if (this.getStockStatus(product) === 'outofstock') {
+      return false;
+    }
+
+    // For variable products, a variation must be selected
+    if (product.type === 'variable') {
+      return !!this.selectedVariation;
+    }
+
+    // For simple products, always allow (if in stock)
+    return product.purchasable !== false;
+  }
 }
