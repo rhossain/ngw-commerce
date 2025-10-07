@@ -114,6 +114,22 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     this.selectedImage = index;
   }
 
+  getMainImage(product: Product): string {
+    // Safety check for images array
+    if (!product || !product.images || product.images.length === 0) {
+      return this.getPlaceholderImage();
+    }
+    
+    // Ensure selectedImage is within bounds
+    const imageIndex = this.selectedImage < product.images.length ? this.selectedImage : 0;
+    return product.images[imageIndex]?.src || this.getPlaceholderImage();
+  }
+
+  getPlaceholderImage(): string {
+    // Return a data URI gray placeholder to avoid external requests
+    return 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="800" height="800"%3E%3Crect width="800" height="800" fill="%23e5e7eb"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="32" fill="%239ca3af"%3ENo Image Available%3C/text%3E%3C/svg%3E';
+  }
+
   incrementQuantity(): void {
     this.quantity++;
   }

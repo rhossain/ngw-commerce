@@ -1,10 +1,13 @@
 export interface User {
   id: number;
   email: string;
+  username?: string;
   first_name: string;
   last_name: string;
-  display_name: string;
+  display_name?: string;
   role?: string;
+  billing?: Address;
+  shipping?: Address;
 }
 
 export interface LoginRequest {
