@@ -82,7 +82,7 @@
             </div>
 
             <!-- Price -->
-            <div class="flex items-baseline space-x-3 mb-6">
+            <div *ngIf="hasValidPrice(product)" class="flex items-baseline space-x-3 mb-6">
               <span *ngIf="isOnSale(product)" class="text-3xl font-bold text-red-600">
                 ${{getCurrentPrice(product)}}
               </span>
@@ -99,6 +99,16 @@
               <span *ngIf="isOnSale(product)" class="bg-red-100 text-red-800 text-xs font-semibold px-2.5 py-0.5 rounded">
                 SALE
               </span>
+            </div>
+
+            <!-- Price Range Info for Variable Products -->
+            <div *ngIf="product.type === 'variable' && !selectedVariation && isPriceRange(product)" class="mb-4">
+              <p class="text-sm text-gray-600 italic">
+                <svg class="w-4 h-4 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                </svg>
+                Select options to see specific price
+              </p>
             </div>
 
             <!-- Stock Status -->
@@ -121,8 +131,25 @@
             <!-- Variable Product Attributes -->
             <div *ngIf="product.type === 'variable' && product.attributes.length > 0" class="mb-6">
               <div *ngFor="let attribute of product.attributes" class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">{{attribute.name}}</label>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  {{attribute.name}}
+                  <span *ngIf="selectedAttributes[attribute.name]" class="text-gray-500 font-normal ml-2">
+                    ({{selectedAttributes[attribute.name]}})
+                  </span>
+                </label>
+
+                <!-- Use Swatch Component if swatches are available -->
+                <app-variation-swatch
+                  *ngIf="productSwatches.has(attribute.name)"
+                  [options]="productSwatches.get(attribute.name)!"
+                  [selected]="selectedAttributes[attribute.name]"
+                  [size]="'md'"
+                  (optionSelected)="onSwatchSelected(attribute.name, $event)"
+                ></app-variation-swatch>
+
+                <!-- Fallback to Dropdown if no swatches -->
                 <select 
+                  *ngIf="!productSwatches.has(attribute.name)"
                   [(ngModel)]="selectedAttributes[attribute.name]"
                   (change)="onAttributeChange(attribute.name, selectedAttributes[attribute.name])"
                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500"

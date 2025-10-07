@@ -9,7 +9,7 @@
       />
       
       <!-- Sale Badge -->
-      <div *ngIf="product.on_sale" 
+      <div *ngIf="isOnSale()" 
            class="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded-md text-xs font-semibold">
         SALE
       </div>
@@ -74,19 +74,19 @@
     </div>
 
     <!-- Price -->
-    <div class="flex items-baseline space-x-2 mb-3">
-      <span *ngIf="product.on_sale" class="text-lg font-bold text-red-600">
-        ${{product.sale_price}}
+    <div *ngIf="hasValidPrice()" class="flex items-baseline space-x-2 mb-3">
+      <span *ngIf="isOnSale()" class="text-lg font-bold text-red-600">
+        ${{getPriceDisplay()}}
       </span>
       <span 
         class="font-bold"
-        [class.text-lg]="!product.on_sale"
-        [class.text-gray-900]="!product.on_sale"
-        [class.text-sm]="product.on_sale"
-        [class.text-gray-500]="product.on_sale"
-        [class.line-through]="product.on_sale"
+        [class.text-lg]="!isOnSale()"
+        [class.text-gray-900]="!isOnSale()"
+        [class.text-sm]="isOnSale()"
+        [class.text-gray-500]="isOnSale()"
+        [class.line-through]="isOnSale()"
       >
-        ${{product.regular_price}}
+        ${{getRegularPriceDisplay()}}
       </span>
     </div>
 

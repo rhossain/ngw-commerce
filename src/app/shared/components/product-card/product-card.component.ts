@@ -81,4 +81,66 @@ export class ProductCardComponent {
       ? this.product.images[0].src
       : 'https://placeholder-image-service.onrender.com/image/400x400?prompt=Product placeholder image showing generic item&id=placeholder-001&customer_id=cus_TA1YAkwFiIX1gw';
   }
+
+  getPriceDisplay(): string {
+    // For variable products, show price range
+    if (this.product.type === 'variable' && this.product.variations && this.product.variations.length > 0) {
+      const prices = this.product.variations
+        .map(v => parseFloat(v.price))
+        .filter(p => !isNaN(p) && p > 0);
+
+      if (prices.length === 0) {
+        return '0.00';
+      }
+
+      const min = Math.min(...prices).toFixed(2);
+      const max = Math.max(...prices).toFixed(2);
+
+      return min === max ? min : `${min} - ${max}`;
+    }
+
+    // For simple products
+    return this.product.on_sale && this.product.sale_price 
+      ? this.product.sale_price 
+      : (this.product.price || this.product.regular_price || '0.00');
+  }
+
+  getRegularPriceDisplay(): string {
+    // For variable products, show regular price range
+    if (this.product.type === 'variable' && this.product.variations && this.product.variations.length > 0) {
+      const regularPrices = this.product.variations
+        .map(v => parseFloat(v.regular_price))
+        .filter(p => !isNaN(p) && p > 0);
+
+      if (regularPrices.length === 0) {
+        return '0.00';
+      }
+
+      const min = Math.min(...regularPrices).toFixed(2);
+      const max = Math.max(...regularPrices).toFixed(2);
+
+      return min === max ? min : `${min} - ${max}`;
+    }
+
+    // For simple products
+    return this.product.regular_price || this.product.price || '0.00';
+  }
+
+  hasValidPrice(): boolean {
+    if (this.product.type === 'variable' && this.product.variations && this.product.variations.length > 0) {
+      return this.product.variations.some(v => v.price && parseFloat(v.price) > 0);
+    }
+    
+    const priceToCheck = this.product.price || this.product.regular_price;
+    return !!priceToCheck && (parseFloat(priceToCheck) > 0);
+  }
+
+  isOnSale(): boolean {
+    // For variable products, check if any variation is on sale
+    if (this.product.type === 'variable' && this.product.variations && this.product.variations.length > 0) {
+      return this.product.variations.some(v => v.on_sale);
+    }
+    
+    return this.product.on_sale;
+  }
 }

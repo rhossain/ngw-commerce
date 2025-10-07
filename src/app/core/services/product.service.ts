@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
-import { Observable, of, catchError } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, of, catchError, forkJoin } from 'rxjs';
+import { map, switchMap } from 'rxjs/operators';
 import { ApiService } from './api.service';
-import { Product, ProductSearchParams, ProductSearchResponse } from '../models/product.model';
+import { Product, ProductSearchParams, ProductSearchResponse, ProductVariation } from '../models/product.model';
 
 @Injectable({
   providedIn: 'root'
@@ -13,13 +13,52 @@ export class ProductService {
   searchProducts(params: ProductSearchParams): Observable<ProductSearchResponse> {
     // Use standard WooCommerce products endpoint
     return this.api.get<any[]>('/products', params).pipe(
-      map((products: any[]) => ({
-        success: true,
-        products: products,
-        total: products.length,
-        pages: 1,
-        current_page: params.page || 1
-      })),
+      switchMap((products: any[]) => {
+        // Check if there are any variable products that need variation details
+        const variableProducts = products.filter(p => p.type === 'variable' && p.variations && p.variations.length > 0);
+        
+        if (variableProducts.length === 0) {
+          // No variable products, return as is
+          return of({
+            success: true,
+            products: products,
+            total: products.length,
+            pages: 1,
+            current_page: params.page || 1
+          });
+        }
+        
+        // Fetch variations for all variable products
+        const variationFetchRequests = variableProducts.map(product => {
+          const variationRequests = product.variations.map((variationId: number) =>
+            this.api.get<ProductVariation>(`/products/${product.id}/variations/${variationId}`).pipe(
+              catchError(error => {
+                console.error(`Error fetching variation ${variationId} for product ${product.id}:`, error);
+                return of(null);
+              })
+            )
+          );
+          
+          return forkJoin(variationRequests).pipe(
+            map((variations) => {
+              // Filter out null values and assign to product
+              product.variations = (variations as (ProductVariation | null)[]).filter(v => v !== null) as ProductVariation[];
+              return product;
+            })
+          );
+        });
+        
+        // Fetch all variations in parallel
+        return forkJoin(variationFetchRequests).pipe(
+          map(() => ({
+            success: true,
+            products: products,
+            total: products.length,
+            pages: 1,
+            current_page: params.page || 1
+          }))
+        );
+      }),
       catchError((error) => {
         console.error('WooCommerce API Error:', error);
         // Return empty result on error
@@ -47,13 +86,44 @@ export class ProductService {
     // WooCommerce API supports slug parameter to filter products
     console.log('Fetching product by slug:', slug);
     
-    return this.api.get<any[]>('/products', { slug: slug }).pipe(
-      map((products: any[]) => {
+    // Include variations in the response for variable products
+    return this.api.get<any[]>('/products', { slug: slug, _embed: true }).pipe(
+      switchMap((products: any[]) => {
         console.log('WooCommerce API response for slug', slug, ':', products);
         
         if (products && products.length > 0) {
-          console.log('Product found by slug:', products[0]);
-          return products[0];
+          const product = products[0];
+          console.log('Product found by slug:', product);
+          console.log('Product type:', product.type);
+          console.log('Product price:', product.price);
+          console.log('Product variations:', product.variations);
+          console.log('Product variations length:', product.variations?.length);
+          
+          // If it's a variable product with variation IDs, fetch the full variation data
+          if (product.type === 'variable' && product.variations && product.variations.length > 0) {
+            console.log('Fetching variation details for product:', product.id);
+            
+            // Fetch all variations
+            const variationRequests = product.variations.map((variationId: number) =>
+              this.api.get<ProductVariation>(`/products/${product.id}/variations/${variationId}`).pipe(
+                catchError(error => {
+                  console.error(`Error fetching variation ${variationId}:`, error);
+                  return of(null);
+                })
+              )
+            );
+            
+            return forkJoin(variationRequests).pipe(
+              map((variations) => {
+                // Filter out null values and assign to product
+                product.variations = (variations as (ProductVariation | null)[]).filter(v => v !== null) as ProductVariation[];
+                console.log('Fetched variations:', product.variations);
+                return product;
+              })
+            );
+          }
+          
+          return of(product);
         }
         
         console.error('No product found with slug:', slug);
