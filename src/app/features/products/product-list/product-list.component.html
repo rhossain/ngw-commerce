@@ -140,10 +140,10 @@
               <button 
                 *ngFor="let page of [].constructor(pagination.pages); let i = index"
                 (click)="onPageChange(i + 1)"
-                [class.bg-primary-600]="pagination.currentPage === i + 1"
+                [class.bg-blue-400]="pagination.currentPage === i + 1"
                 [class.text-white]="pagination.currentPage === i + 1"
-                [class.border-primary-600]="pagination.currentPage === i + 1"
-                class="px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+                [class.border-blue-600]="pagination.currentPage === i + 1"
+                class="px-3 py-2 border border-gray-300 rounded-md hover:bg-blue-500"
               >
                 {{i + 1}}
               </button>
