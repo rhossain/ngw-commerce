@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
-import { Observable, of, catchError, forkJoin } from 'rxjs';
+import { Observable, of, catchError, forkJoin, throwError } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { ApiService } from './api.service';
 import { Product, ProductSearchParams, ProductSearchResponse, ProductVariation } from '../models/product.model';
+import { ProductReview, ReviewCreateRequest, ReviewUpdateRequest } from '../models/review.model';
 
 @Injectable({
   providedIn: 'root'
@@ -162,23 +163,105 @@ export class ProductService {
     );
   }
 
-  getProductReviews(productId: number): Observable<any[]> {
-    return this.api.get<any[]>(`/products/${productId}/reviews`).pipe(
+  getProductReviews(productId: number): Observable<ProductReview[]> {
+    // Use WooCommerce Store API - Public API designed for storefronts
+    // GET /wc/store/v1/products/reviews?product_id={id}
+    return this.api.getStore<any[]>('/products/reviews', { 
+      product_id: productId,
+      per_page: 100
+    }).pipe(
+      map(reviews => reviews.map(review => ({
+        id: review.id,
+        product_id: review.product_id,
+        date_created: review.date_created,
+        date_created_gmt: review.date_created_gmt,
+        status: 'approved', // Store API only returns approved reviews
+        reviewer: review.reviewer,
+        reviewer_email: '', // Not provided by Store API for privacy
+        review: review.review,
+        rating: review.rating,
+        verified: review.verified || false,
+        reviewer_avatar_urls: review.reviewer_avatar_urls
+      }))),
       catchError((error) => {
-        console.error('Reviews fetch error:', error);
+        console.warn('Reviews fetch error from Store API:', error);
+        console.log('Product reviews may not be available.');
         return of([]);
       })
     );
   }
 
-  addProductReview(productId: number, rating: number, content: string): Observable<any> {
-    return this.api.post(`/products/${productId}/reviews`, { 
-      rating, 
-      review: content 
+  addProductReview(request: ReviewCreateRequest): Observable<ProductReview> {
+    // Use custom WordPress plugin endpoint for review submission
+    // Requires user to be logged in - name and email come from WordPress user
+    return this.api.postReview<any>('/reviews', {
+      product_id: request.product_id,
+      review: request.review,
+      rating: request.rating
     }).pipe(
+      map((response: any) => {
+        // Custom endpoint returns nested review object
+        const review = response.review || response;
+        return {
+          id: review.id,
+          product_id: review.product_id,
+          date_created: review.date_created,
+          reviewer: review.reviewer,
+          review: review.review,
+          rating: review.rating,
+          verified: review.verified || false,
+          reviewer_avatar_urls: review.reviewer_avatar_urls || {},
+          user_id: review.user_id
+        } as ProductReview;
+      }),
       catchError((error) => {
-        console.error('Add review error:', error);
-        throw error;
+        console.error('Error creating review:', error);
+        // Return user-friendly error message
+        const errorMessage = error.error?.message || 
+                           error.message || 
+                           'Failed to submit review. Please try again.';
+        return throwError(() => new Error(errorMessage));
+      })
+    );
+  }
+
+  updateProductReview(request: ReviewUpdateRequest): Observable<ProductReview> {
+    return this.api.putReview<any>(`/reviews/${request.id}`, {
+      review: request.review,
+      rating: request.rating
+    }).pipe(
+      map((response: any) => {
+        const review = response.review || response;
+        return {
+          id: review.id,
+          product_id: review.product_id,
+          date_created: review.date_created,
+          reviewer: review.reviewer,
+          review: review.review,
+          rating: review.rating,
+          verified: review.verified || false,
+          reviewer_avatar_urls: review.reviewer_avatar_urls || {},
+          user_id: review.user_id
+        } as ProductReview;
+      }),
+      catchError((error) => {
+        console.error('Error updating review:', error);
+        const errorMessage = error.error?.message || 
+                           error.message || 
+                           'Failed to update review. Please try again.';
+        return throwError(() => new Error(errorMessage));
+      })
+    );
+  }
+
+  deleteProductReview(reviewId: number): Observable<any> {
+    return this.api.deleteReview<any>(`/reviews/${reviewId}`).pipe(
+      catchError((error) => {
+        console.error('Error deleting review:', error);
+        const errorMessage = error.error?.message || 
+                           error.message || 
+                           'Failed to delete review. Please try again.';
+        return throwError(() => new Error(errorMessage));
       })
     );
   }

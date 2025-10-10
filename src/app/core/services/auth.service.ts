@@ -31,47 +31,57 @@ export class AuthService {
   }
 
   login(credentials: LoginRequest): Observable<any> {
-    // Client-side login: Search for customer by email
-    // Note: WooCommerce REST API doesn't have a login endpoint
-    // In production, you'd use JWT authentication or WordPress REST API
+    // WordPress Application Password Authentication
+    // Create Application Password: WordPress Admin → Users → Your Profile → Application Passwords
     
-    return this.api.get<any[]>('/customers', { email: credentials.username }).pipe(
-      map(customers => {
-        console.log('Customer search result:', customers);
+    const authHeader = 'Basic ' + btoa(credentials.username + ':' + credentials.password);
+    const wpApiUrl = 'https://woocommerce.rshossain.com/wp-json/wp/v2/users/me';
+    
+    // Authenticate with WordPress to verify credentials
+    return this.api.http.get<any>(wpApiUrl, {
+      headers: { 'Authorization': authHeader },
+      withCredentials: true
+    }).pipe(
+      tap((wpUser: any) => {
+        console.log('WordPress user authenticated:', wpUser);
         
-        if (customers && customers.length > 0) {
-          const customer = customers[0];
-          
-          // Client-side password storage is NOT secure
-          // This is just for development/demo purposes
-          const storedPassword = this.storage.getItem<string>(`password_${customer.email}`);
-          
-          if (storedPassword === credentials.password) {
-            const user: User = {
-              id: customer.id,
-              email: customer.email,
-              first_name: customer.first_name,
-              last_name: customer.last_name,
-              billing: customer.billing,
-              shipping: customer.shipping,
-              username: customer.email
-            };
-            
-            this.storage.setItem('currentUser', user);
-            this.currentUserSubject.next(user);
-            this.isAuthenticatedSubject.next(true);
-            
-            return { success: true, user };
-          } else {
-            throw new Error('Invalid password');
+        // Store WordPress authentication header for future requests
+        this.storage.setItem('wp_auth_header', authHeader);
+        
+        // Store user data
+        const user: User = {
+          id: wpUser.id,
+          email: wpUser.email || '',
+          first_name: wpUser.first_name || '',
+          last_name: wpUser.last_name || '',
+          username: wpUser.username || credentials.username,
+          billing: {
+            first_name: wpUser.first_name || '',
+            last_name: wpUser.last_name || '',
+            address_1: '',
+            city: '',
+            state: '',
+            postcode: '',
+            country: ''
+          },
+          shipping: {
+            first_name: wpUser.first_name || '',
+            last_name: wpUser.last_name || '',
+            address_1: '',
+            city: '',
+            state: '',
+            postcode: '',
+            country: ''
           }
-        } else {
-          throw new Error('Customer not found');
-        }
+        };
+        
+        this.storage.setItem('currentUser', user);
+        this.currentUserSubject.next(user);
+        this.isAuthenticatedSubject.next(true);
       }),
       catchError(error => {
-        console.error('Login error:', error);
-        return throwError(() => new Error('Invalid email or password'));
+        console.error('WordPress authentication error:', error);
+        return throwError(() => new Error('Invalid WordPress credentials. Please use Application Password from WordPress Admin → Users → Your Profile'));
       })
     );
   }

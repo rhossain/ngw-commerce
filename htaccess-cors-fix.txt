@@ -1,0 +1,32 @@
+# .htaccess - CORS Configuration Fix
+# Replace the "BEGIN CORS Headers for WooCommerce API" section with this:
+
+# BEGIN CORS Headers for WooCommerce API - FIXED
+<IfModule mod_headers.c>
+    # Get the Origin header from the request
+    SetEnvIf Origin "^http://localhost:4200$" ORIGIN_MATCHED=http://localhost:4200
+    SetEnvIf Origin "^http://localhost:5300$" ORIGIN_MATCHED=http://localhost:5300
+    SetEnvIf Origin "^http://localhost:3000$" ORIGIN_MATCHED=http://localhost:3000
+    SetEnvIf Origin "^https://rshossain\.com$" ORIGIN_MATCHED=https://rshossain.com
+    SetEnvIf Origin "^https://www\.rshossain\.com$" ORIGIN_MATCHED=https://www.rshossain.com
+    SetEnvIf Origin "^https://rshossain\.com/demo/ngwcommerce$" ORIGIN_MATCHED=https://rshossain.com/demo/ngwcommerce
+    SetEnvIf Origin "^https://www\.rshossain\.com/demo/ngwcommerce$" ORIGIN_MATCHED=https://www.rshossain.com/demo/ngwcommerce
+    
+    # Set CORS headers only if origin matches
+    Header always set Access-Control-Allow-Origin "%{ORIGIN_MATCHED}e" env=ORIGIN_MATCHED
+    Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+    Header always set Access-Control-Allow-Headers "Authorization, Content-Type, X-Requested-With, Accept, Origin, X-WP-Nonce"
+    Header always set Access-Control-Allow-Credentials "true"
+    Header always set Access-Control-Max-Age "3600"
+    
+    # Handle OPTIONS preflight requests
+    RewriteCond %{REQUEST_METHOD} OPTIONS
+    RewriteRule ^(.*)$ $1 [R=200,L]
+</IfModule>
+# END CORS Headers for WooCommerce API - FIXED
+
+# EXPLANATION:
+# - Removed wildcard "*" (not allowed with credentials)
+# - Added origin whitelist using SetEnvIf
+# - Only sends Access-Control-Allow-Origin if origin is whitelisted
+# - Works with withCredentials: true in Angular

@@ -8,8 +8,11 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(req).pipe(
     catchError((error) => {
-      if (error.status === 401) {
-        // Unauthorized - redirect to login
+      // Don't redirect for WordPress API calls (reviews, comments)
+      const isWordPressApi = req.url.includes('/wp/v2/');
+      
+      if (error.status === 401 && !isWordPressApi) {
+        // Unauthorized - redirect to login (except for WordPress API)
         router.navigate(['/account/login']);
       } else if (error.status === 403) {
         // Forbidden

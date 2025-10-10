@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { Observable, Subject } from 'rxjs';
@@ -9,10 +9,12 @@ import { AppState } from '../../../store/app.state';
 import * as ProductActions from '../../../store/actions/product.actions';
 import * as ProductSelectors from '../../../store/selectors/product.selectors';
 import { Product, ProductVariation } from '../../../core/models/product.model';
+import { ProductReview, ReviewCreateRequest, ReviewUpdateRequest } from '../../../core/models/review.model';
 import { CartService } from '../../../core/services/cart.service';
 import { WishlistService } from '../../../core/services/wishlist.service';
 import { ProductService } from '../../../core/services/product.service';
 import { AttributeService } from '../../../core/services/attribute.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { ToastrService } from 'ngx-toastr';
 import { ProductCardComponent } from '../../../shared/components/product-card/product-card.component';
 import { VariationSwatchComponent, SwatchOption } from '../../../shared/components/variation-swatch/variation-swatch.component';
@@ -35,8 +37,13 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
   selectedVariation: ProductVariation | null = null;
   selectedAttributes: { [key: string]: string } = {};
   
+  // Image zoom properties
+  isZoomed = false;
+  zoomX = 0;
+  zoomY = 0;
+  
   relatedProducts: Product[] = [];
-  reviews: any[] = [];
+  reviews: ProductReview[] = [];
   productSwatches: Map<string, SwatchOption[]> = new Map();
   
   activeTab: 'description' | 'reviews' | 'additional' = 'description';
@@ -46,18 +53,31 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     rating: 5,
     content: ''
   };
+  
+  editingReview: ProductReview | null = null;
+  
+  // Review UI state
+  hoveredStar: number = 0;
+  isSubmittingReview = false;
+  currentUserId: number | null = null;
 
   constructor(
     private route: ActivatedRoute,
+    private router: Router,
     private store: Store<AppState>,
     private cartService: CartService,
     private wishlistService: WishlistService,
     private productService: ProductService,
     private attributeService: AttributeService,
+    private authService: AuthService,
     private toastr: ToastrService
   ) {
     this.product$ = this.store.select(ProductSelectors.selectSelectedProduct);
     this.loading$ = this.store.select(ProductSelectors.selectProductsLoading);
+    
+    // Get current user ID for review ownership check
+    const currentUser = this.authService.getCurrentUser();
+    this.currentUserId = currentUser?.id || null;
   }
 
   ngOnInit(): void {
@@ -152,6 +172,29 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
 
   selectImage(index: number): void {
     this.selectedImage = index;
+  }
+
+  onImageMouseEnter(): void {
+    this.isZoomed = true;
+  }
+
+  onImageMouseLeave(): void {
+    this.isZoomed = false;
+  }
+
+  onImageMouseMove(event: MouseEvent): void {
+    if (!this.isZoomed) return;
+
+    const target = event.currentTarget as HTMLElement;
+    const rect = target.getBoundingClientRect();
+    
+    // Calculate cursor position relative to image (0-100%)
+    this.zoomX = ((event.clientX - rect.left) / rect.width) * 100;
+    this.zoomY = ((event.clientY - rect.top) / rect.height) * 100;
+    
+    // Keep zoom within bounds
+    this.zoomX = Math.max(0, Math.min(100, this.zoomX));
+    this.zoomY = Math.max(0, Math.min(100, this.zoomY));
   }
 
   getMainImage(product: Product): string {
@@ -329,26 +372,168 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
   }
 
   submitReview(product: Product): void {
+    // Get current user info
+    const currentUser = this.authService.getCurrentUser();
+    
+    // Debug: Log user data
+    console.log('Current User Object:', currentUser);
+    
+    // Check if user is logged in
+    if (!currentUser) {
+      this.toastr.warning('Please login to submit a review');
+      this.router.navigate(['/account/login'], { 
+        queryParams: { returnUrl: `/products/${product.slug}` }
+      });
+      return;
+    }
+
+    // Validation
     if (!this.newReview.content.trim()) {
       this.toastr.error('Please write a review');
       return;
     }
 
-    this.productService.addProductReview(
-      product.id,
-      this.newReview.rating,
-      this.newReview.content
-    ).subscribe({
+    this.isSubmittingReview = true;
+    
+    // Build reviewer name with multiple fallbacks
+    let reviewerName = '';
+    if (currentUser.first_name || currentUser.last_name) {
+      reviewerName = `${currentUser.first_name || ''} ${currentUser.last_name || ''}`.trim();
+    }
+    if (!reviewerName && currentUser.username) {
+      reviewerName = currentUser.username;
+    }
+    if (!reviewerName && currentUser.email) {
+      reviewerName = currentUser.email.split('@')[0]; // Use email username part
+    }
+    
+    // Debug: Log what we're sending
+    console.log('Reviewer Name:', reviewerName);
+    console.log('Reviewer Email:', currentUser.email);
+    
+    const reviewRequest: ReviewCreateRequest = {
+      product_id: product.id,
+      review: this.newReview.content,
+      rating: this.newReview.rating,
+      // Send user info from Angular app
+      reviewer_name: reviewerName || 'Customer',
+      reviewer_email: currentUser.email || 'noemail@example.com',
+      first_name: currentUser.first_name || '',
+      last_name: currentUser.last_name || '',
+      email: currentUser.email || ''
+    };
+    
+    // Debug: Log full request
+    console.log('Review Request:', reviewRequest);
+
+    this.productService.addProductReview(reviewRequest).subscribe({
       next: () => {
         this.toastr.success('Review submitted successfully!');
         this.newReview = { rating: 5, content: '' };
+        this.hoveredStar = 0;
+        this.isSubmittingReview = false;
         this.loadReviews(product.id);
       },
       error: (error) => {
-        this.toastr.error('Failed to submit review');
+        this.isSubmittingReview = false;
+        const message = error.message || 'Failed to submit review. Please try again.';
+        this.toastr.error(message);
         console.error('Review submission error:', error);
       }
     });
+  }
+  
+  startEditReview(review: ProductReview): void {
+    this.editingReview = review;
+    this.newReview = {
+      rating: review.rating,
+      content: review.review
+    };
+    this.activeTab = 'reviews';
+    // Scroll to review form
+    setTimeout(() => {
+      document.getElementById('review-form')?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+  }
+
+  updateReview(): void {
+    if (!this.editingReview) return;
+
+    if (!this.newReview.content.trim()) {
+      this.toastr.error('Please write a review');
+      return;
+    }
+
+    this.isSubmittingReview = true;
+
+    const updateRequest: ReviewUpdateRequest = {
+      id: this.editingReview.id,
+      review: this.newReview.content,
+      rating: this.newReview.rating
+    };
+
+    this.productService.updateProductReview(updateRequest).subscribe({
+      next: () => {
+        this.toastr.success('Review updated successfully!');
+        this.cancelEdit();
+        this.isSubmittingReview = false;
+        this.loadReviews(this.editingReview!.product_id);
+      },
+      error: (error) => {
+        this.isSubmittingReview = false;
+        const message = error.message || 'Failed to update review. Please try again.';
+        this.toastr.error(message);
+        console.error('Review update error:', error);
+      }
+    });
+  }
+
+  cancelEdit(): void {
+    this.editingReview = null;
+    this.newReview = { rating: 5, content: '' };
+    this.hoveredStar = 0;
+  }
+
+  deleteReview(review: ProductReview): void {
+    if (!confirm('Are you sure you want to delete this review?')) {
+      return;
+    }
+
+    this.productService.deleteProductReview(review.id).subscribe({
+      next: () => {
+        this.toastr.success('Review deleted successfully!');
+        this.loadReviews(review.product_id);
+        if (this.editingReview?.id === review.id) {
+          this.cancelEdit();
+        }
+      },
+      error: (error) => {
+        const message = error.message || 'Failed to delete review. Please try again.';
+        this.toastr.error(message);
+        console.error('Review deletion error:', error);
+      }
+    });
+  }
+
+  canEditReview(review: ProductReview): boolean {
+    return !!this.currentUserId && review.user_id === this.currentUserId;
+  }
+
+  isLoggedIn(): boolean {
+    return !!this.authService.getCurrentUser();
+  }
+  
+  // Star rating methods
+  setRating(rating: number): void {
+    this.newReview.rating = rating;
+  }
+  
+  hoverStar(star: number): void {
+    this.hoveredStar = star;
+  }
+  
+  leaveStar(): void {
+    this.hoveredStar = 0;
   }
 
   setActiveTab(tab: 'description' | 'reviews' | 'additional'): void {

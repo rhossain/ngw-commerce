@@ -7,7 +7,7 @@ import { environment } from '../../../environments/environment';
   providedIn: 'root'
 })
 export class ApiService {
-  constructor(private http: HttpClient) {}
+  constructor(public http: HttpClient) {} // Made public for WordPress auth
 
   private getAuthHeaders(): HttpHeaders {
     // Create Basic Auth header for WooCommerce
@@ -59,6 +59,69 @@ export class ApiService {
     });
   }
 
+  // WordPress API methods (for comments/reviews) - Public access, no auth
+  getWp<T>(endpoint: string, params?: any): Observable<T> {
+    const url = `${environment.apiUrl}${endpoint}`;
+    const httpParams = this.buildParams(params);
+    
+    console.log('[API Service] GET WP Request (Public):', {
+      url,
+      endpoint,
+      params,
+      fullUrl: `${url}?${httpParams.toString()}`
+    });
+    
+    // WordPress comments are public, don't send WooCommerce auth headers
+    return this.http.get<T>(url, { 
+      params: httpParams
+    });
+  }
+
+  postWp<T>(endpoint: string, body: any): Observable<T> {
+    const url = `${environment.apiUrl}${endpoint}`;
+    
+    console.log('[API Service] POST WP Request:', { url, body });
+    
+    // For creating comments, we still need some form of auth
+    // But we'll let it fail gracefully if not authenticated
+    return this.http.post<T>(url, body, { 
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json'
+      })
+    });
+  }
+
+  // WooCommerce Store API methods - Public API for storefronts
+  getStore<T>(endpoint: string, params?: any): Observable<T> {
+    const url = `${environment.storeApi}${endpoint}`;
+    const httpParams = this.buildParams(params);
+    
+    console.log('[API Service] GET Store API Request (Public):', {
+      url,
+      endpoint,
+      params,
+      fullUrl: `${url}?${httpParams.toString()}`
+    });
+    
+    // Store API is public, no authentication needed
+    return this.http.get<T>(url, { 
+      params: httpParams
+    });
+  }
+
+  postStore<T>(endpoint: string, body: any): Observable<T> {
+    const url = `${environment.storeApi}${endpoint}`;
+    
+    console.log('[API Service] POST Store API Request:', { url, body });
+    
+    // Store API public endpoint
+    return this.http.post<T>(url, body, { 
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json'
+      })
+    });
+  }
+
   private buildParams(params?: any): HttpParams {
     let httpParams = new HttpParams();
     if (params) {
@@ -69,5 +132,47 @@ export class ApiService {
       });
     }
     return httpParams;
+  }
+
+  // Custom Reviews API methods (requires WordPress authentication)
+  postReview<T>(endpoint: string, body: any): Observable<T> {
+    const url = `${environment.reviewsApi}${endpoint}`;
+    console.log('[API Service] POST Custom Reviews API Request (Authenticated):', {
+      url,
+      endpoint,
+      body
+    });
+    return this.http.post<T>(url, body, {
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json'
+      }),
+      withCredentials: true // Send WordPress cookies for authentication
+    });
+  }
+
+  putReview<T>(endpoint: string, body: any): Observable<T> {
+    const url = `${environment.reviewsApi}${endpoint}`;
+    console.log('[API Service] PUT Custom Reviews API Request (Authenticated):', {
+      url,
+      endpoint,
+      body
+    });
+    return this.http.put<T>(url, body, {
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json'
+      }),
+      withCredentials: true
+    });
+  }
+
+  deleteReview<T>(endpoint: string): Observable<T> {
+    const url = `${environment.reviewsApi}${endpoint}`;
+    console.log('[API Service] DELETE Custom Reviews API Request (Authenticated):', {
+      url,
+      endpoint
+    });
+    return this.http.delete<T>(url, {
+      withCredentials: true
+    });
   }
 }
