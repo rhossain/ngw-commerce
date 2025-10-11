@@ -86,8 +86,12 @@ export interface ProductSearchParams {
   min_price?: number;
   max_price?: number;
   in_stock?: boolean;
+  stock_status?: string;
+  on_sale?: boolean;
+  featured?: boolean;
   min_rating?: number;
   orderby?: 'price' | 'price-desc' | 'rating' | 'popularity' | 'date';
+  order?: 'asc' | 'desc';
   page?: number;
   per_page?: number;
 }

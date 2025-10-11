@@ -9,6 +9,11 @@ export const routes: Routes = [
     title: 'Home - WooCommerce Shop'
   },
   {
+    path: 'shop',
+    loadComponent: () => import('./features/products/shop/shop.component').then(m => m.ShopComponent),
+    title: 'Shop - WooCommerce Shop'
+  },
+  {
     path: 'products',
     loadComponent: () => import('./features/products/product-list/product-list.component').then(m => m.ProductListComponent),
     title: 'Products - WooCommerce Shop'

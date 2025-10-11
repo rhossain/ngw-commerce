@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Observable, of, catchError, forkJoin, throwError } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { ApiService } from './api.service';
-import { Product, ProductSearchParams, ProductSearchResponse, ProductVariation } from '../models/product.model';
+import { Product, ProductSearchParams, ProductSearchResponse, ProductVariation, ProductCategory } from '../models/product.model';
 import { ProductReview, ReviewCreateRequest, ReviewUpdateRequest } from '../models/review.model';
 
 @Injectable({
@@ -262,6 +262,30 @@ export class ProductService {
                            error.message || 
                            'Failed to delete review. Please try again.';
         return throwError(() => new Error(errorMessage));
+      })
+    );
+  }
+
+  /**
+   * Get all product categories from WooCommerce
+   */
+  getCategories(): Observable<ProductCategory[]> {
+    return this.api.get<ProductCategory[]>('/products/categories', { per_page: 100 }).pipe(
+      catchError((error) => {
+        console.error('Error fetching categories:', error);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Get a specific category by ID
+   */
+  getCategoryById(id: number): Observable<ProductCategory> {
+    return this.api.get<ProductCategory>(`/products/categories/${id}`).pipe(
+      catchError((error) => {
+        console.error('Error fetching category:', error);
+        throw error;
       })
     );
   }

@@ -14,6 +14,10 @@
            class="text-gray-700 hover:text-primary-600 transition">
           Home
         </a>
+        <a routerLink="/shop" routerLinkActive="text-primary-600" 
+           class="text-gray-700 hover:text-primary-600 transition">
+          Shop
+        </a>
         <a routerLink="/products" routerLinkActive="text-primary-600" 
            class="text-gray-700 hover:text-primary-600 transition">
           Products
@@ -98,6 +102,7 @@
     <!-- Mobile Menu -->
     <div *ngIf="mobileMenuOpen" class="md:hidden py-4">
       <a routerLink="/" class="block py-2 text-gray-700 hover:text-primary-600">Home</a>
+      <a routerLink="/shop" class="block py-2 text-gray-700 hover:text-primary-600">Shop</a>
       <a routerLink="/products" class="block py-2 text-gray-700 hover:text-primary-600">Products</a>
       <a routerLink="/wishlist" class="block py-2 text-gray-700 hover:text-primary-600">Wishlist</a>
       <a routerLink="/account/profile" class="block py-2 text-gray-700 hover:text-primary-600">My Account</a>

@@ -1,0 +1,451 @@
+<div class="min-h-screen bg-gray-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    
+    <!-- Page Header -->
+    <div class="mb-6">
+      <h1 class="text-3xl font-bold text-gray-900 mb-2">Shop</h1>
+      <p class="text-gray-600">Discover our collection of premium products</p>
+    </div>
+
+    <!-- Search Bar and Controls -->
+    <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
+      <div class="flex flex-col md:flex-row gap-4 items-center">
+        <!-- Search Input -->
+        <div class="flex-1 w-full">
+          <div class="relative">
+            <input 
+              type="text" 
+              [(ngModel)]="filters.search"
+              (input)="onSearchChange($any($event.target).value)"
+              placeholder="Search products..." 
+              class="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            <svg class="absolute left-3 top-3 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Sort and View Controls -->
+        <div class="flex gap-2 w-full md:w-auto">
+          <!-- Sort Dropdown -->
+          <select 
+            [(ngModel)]="filters.orderby"
+            (change)="onSortChange(filters.orderby!)"
+            class="flex-1 md:flex-initial px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option *ngFor="let option of sortOptions" [value]="option.value">
+              {{option.label}}
+            </option>
+          </select>
+
+          <!-- View Mode Toggle (Desktop) -->
+          <div class="hidden md:flex border border-gray-300 rounded-lg">
+            <button 
+              (click)="setViewMode('grid')"
+              [class.bg-blue-500]="viewMode === 'grid'"
+              [class.text-white]="viewMode === 'grid'"
+              [class.text-gray-600]="viewMode !== 'grid'"
+              class="px-3 py-2 rounded-l-lg hover:bg-gray-100 transition"
+            >
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM13 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2h-2z"/>
+              </svg>
+            </button>
+            <button 
+              (click)="setViewMode('list')"
+              [class.bg-blue-500]="viewMode === 'list'"
+              [class.text-white]="viewMode === 'list'"
+              [class.text-gray-600]="viewMode !== 'list'"
+              class="px-3 py-2 rounded-r-lg hover:bg-gray-100 transition border-l border-gray-300"
+            >
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Mobile Filter Toggle -->
+          <button 
+            (click)="toggleMobileFilters()"
+            class="md:hidden px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition flex items-center gap-2"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+            </svg>
+            Filters
+          </button>
+        </div>
+      </div>
+
+      <!-- Active Filters -->
+      <div *ngIf="hasActiveFilters()" class="mt-4 pt-4 border-t border-gray-200">
+        <div class="flex flex-wrap gap-2 items-center">
+          <span class="text-sm font-medium text-gray-700">Active Filters:</span>
+          
+          <button 
+            *ngIf="filters.category"
+            (click)="onCategoryChange('')"
+            class="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition"
+          >
+            Category: {{ filters.category }}
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+            </svg>
+          </button>
+
+          <button 
+            *ngIf="filters.minPrice || filters.maxPrice"
+            (click)="priceMin = 0; priceMax = 1000; onPriceRangeChange()"
+            class="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition"
+          >
+            Price: ${{filters.minPrice || 0}} - ${{filters.maxPrice || 1000}}
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+            </svg>
+          </button>
+
+          <button 
+            (click)="clearFilters()"
+            class="px-3 py-1 text-sm text-red-600 hover:text-red-700 font-medium"
+          >
+            Clear All
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="flex flex-col lg:flex-row gap-6">
+      
+      <!-- Sidebar Filters (Desktop) -->
+      <aside class="hidden lg:block w-64 flex-shrink-0">
+        <div class="bg-white rounded-lg shadow-sm p-6 sticky top-4">
+          <h2 class="text-lg font-semibold text-gray-900 mb-4">Filters</h2>
+          
+          <!-- Categories -->
+          <div class="mb-6">
+            <h3 class="text-sm font-medium text-gray-900 mb-3">Categories</h3>
+            <div *ngIf="loadingCategories" class="text-sm text-gray-500">Loading...</div>
+            <div *ngIf="!loadingCategories" class="space-y-2">
+              <label 
+                *ngFor="let category of categories"
+                class="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded transition"
+              >
+                <input 
+                  type="radio"
+                  name="category"
+                  [value]="category.slug"
+                  [checked]="filters.category === category.slug"
+                  (change)="onCategoryChange(category.slug)"
+                  class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                />
+                <span class="ml-2 text-sm text-gray-700">{{ category.name }}</span>
+                <span class="ml-auto text-xs text-gray-500">({{ category.count }})</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Price Range -->
+          <div class="mb-6 pb-6 border-b border-gray-200">
+            <h3 class="text-sm font-medium text-gray-900 mb-3">Price Range</h3>
+            <div class="space-y-3">
+              <div>
+                <label class="text-xs text-gray-600">Min Price</label>
+                <input 
+                  type="number" 
+                  [(ngModel)]="priceMin"
+                  min="0"
+                  class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500"
+                  placeholder="$0"
+                />
+              </div>
+              <div>
+                <label class="text-xs text-gray-600">Max Price</label>
+                <input 
+                  type="number" 
+                  [(ngModel)]="priceMax"
+                  min="0"
+                  class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500"
+                  placeholder="$1000"
+                />
+              </div>
+              <button 
+                (click)="onPriceRangeChange()"
+                class="w-full px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition text-sm font-medium"
+              >
+                Apply Price Filter
+              </button>
+            </div>
+          </div>
+
+          <!-- Stock Status -->
+          <div class="mb-6 pb-6 border-b border-gray-200">
+            <h3 class="text-sm font-medium text-gray-900 mb-3">Availability</h3>
+            <label class="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded transition">
+              <input 
+                type="checkbox" 
+                [(ngModel)]="filters.inStock"
+                (change)="onInStockToggle()"
+                class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <span class="ml-2 text-sm text-gray-700">In Stock Only</span>
+            </label>
+          </div>
+
+          <!-- Sale Items -->
+          <div class="mb-6 pb-6 border-b border-gray-200">
+            <h3 class="text-sm font-medium text-gray-900 mb-3">Special Offers</h3>
+            <label class="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded transition">
+              <input 
+                type="checkbox" 
+                [(ngModel)]="filters.onSale"
+                (change)="onSaleToggle()"
+                class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <span class="ml-2 text-sm text-gray-700">On Sale</span>
+            </label>
+            <label class="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded transition mt-2">
+              <input 
+                type="checkbox" 
+                [(ngModel)]="filters.featured"
+                (change)="onFeaturedToggle()"
+                class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <span class="ml-2 text-sm text-gray-700">Featured Products</span>
+            </label>
+          </div>
+
+          <!-- Clear Filters -->
+          <button 
+            *ngIf="hasActiveFilters()"
+            (click)="clearFilters()"
+            class="w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition text-sm font-medium"
+          >
+            Clear All Filters
+          </button>
+        </div>
+      </aside>
+
+      <!-- Mobile Filters Overlay -->
+      <div 
+        *ngIf="showMobileFilters"
+        class="fixed inset-0 bg-black bg-opacity-50 z-50 lg:hidden"
+        (click)="toggleMobileFilters()"
+      >
+        <div 
+          class="absolute right-0 top-0 bottom-0 w-full max-w-sm bg-white overflow-y-auto"
+          (click)="$event.stopPropagation()"
+        >
+          <div class="p-6">
+            <div class="flex items-center justify-between mb-6">
+              <h2 class="text-lg font-semibold text-gray-900">Filters</h2>
+              <button 
+                (click)="toggleMobileFilters()"
+                class="text-gray-500 hover:text-gray-700"
+              >
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
+
+            <!-- Mobile Categories -->
+            <div class="mb-6">
+              <h3 class="text-sm font-medium text-gray-900 mb-3">Categories</h3>
+              <div *ngIf="loadingCategories" class="text-sm text-gray-500">Loading...</div>
+              <div *ngIf="!loadingCategories" class="space-y-2">
+                <label 
+                  *ngFor="let category of categories"
+                  class="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded transition"
+                >
+                  <input 
+                    type="radio"
+                    name="mobile-category"
+                    [value]="category.slug"
+                    [checked]="filters.category === category.slug"
+                    (change)="onCategoryChange(category.slug); toggleMobileFilters()"
+                    class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                  />
+                  <span class="ml-2 text-sm text-gray-700">{{ category.name }}</span>
+                  <span class="ml-auto text-xs text-gray-500">({{ category.count }})</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Mobile Price Range -->
+            <div class="mb-6 pb-6 border-b border-gray-200">
+              <h3 class="text-sm font-medium text-gray-900 mb-3">Price Range</h3>
+              <div class="space-y-3">
+                <input 
+                  type="number" 
+                  [(ngModel)]="priceMin"
+                  placeholder="Min Price"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                />
+                <input 
+                  type="number" 
+                  [(ngModel)]="priceMax"
+                  placeholder="Max Price"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                />
+                <button 
+                  (click)="onPriceRangeChange(); toggleMobileFilters()"
+                  class="w-full px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition text-sm"
+                >
+                  Apply Price Filter
+                </button>
+              </div>
+            </div>
+
+            <!-- Mobile Checkboxes -->
+            <div class="space-y-3">
+              <label class="flex items-center cursor-pointer p-2 rounded hover:bg-gray-50">
+                <input 
+                  type="checkbox" 
+                  [(ngModel)]="filters.inStock"
+                  (change)="onInStockToggle()"
+                  class="w-4 h-4 text-blue-600 border-gray-300 rounded"
+                />
+                <span class="ml-2 text-sm text-gray-700">In Stock Only</span>
+              </label>
+              <label class="flex items-center cursor-pointer p-2 rounded hover:bg-gray-50">
+                <input 
+                  type="checkbox" 
+                  [(ngModel)]="filters.onSale"
+                  (change)="onSaleToggle()"
+                  class="w-4 h-4 text-blue-600 border-gray-300 rounded"
+                />
+                <span class="ml-2 text-sm text-gray-700">On Sale</span>
+              </label>
+              <label class="flex items-center cursor-pointer p-2 rounded hover:bg-gray-50">
+                <input 
+                  type="checkbox" 
+                  [(ngModel)]="filters.featured"
+                  (change)="onFeaturedToggle()"
+                  class="w-4 h-4 text-blue-600 border-gray-300 rounded"
+                />
+                <span class="ml-2 text-sm text-gray-700">Featured Products</span>
+              </label>
+            </div>
+
+            <!-- Mobile Apply & Clear -->
+            <div class="mt-6 space-y-2">
+              <button 
+                (click)="toggleMobileFilters()"
+                class="w-full px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition"
+              >
+                Show Products
+              </button>
+              <button 
+                *ngIf="hasActiveFilters()"
+                (click)="clearFilters(); toggleMobileFilters()"
+                class="w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition"
+              >
+                Clear All Filters
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Products Grid -->
+      <div class="flex-1">
+        <!-- Loading State -->
+        <div *ngIf="loading$ | async" class="flex items-center justify-center py-20">
+          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        </div>
+
+        <!-- Products Grid/List -->
+        <div *ngIf="!(loading$ | async)">
+          <div *ngIf="(products$ | async)?.length === 0" class="text-center py-20">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">No products found</h3>
+            <p class="mt-1 text-sm text-gray-500">Try adjusting your search or filter criteria</p>
+            <button 
+              *ngIf="hasActiveFilters()"
+              (click)="clearFilters()"
+              class="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition"
+            >
+              Clear Filters
+            </button>
+          </div>
+
+          <!-- Grid View -->
+          <div 
+            *ngIf="viewMode === 'grid' && (products$ | async)?.length! > 0"
+            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+          >
+            <app-product-card 
+              *ngFor="let product of (products$ | async)" 
+              [product]="product"
+            ></app-product-card>
+          </div>
+
+          <!-- List View -->
+          <div 
+            *ngIf="viewMode === 'list' && (products$ | async)?.length! > 0"
+            class="space-y-4"
+          >
+            <app-product-card 
+              *ngFor="let product of (products$ | async)" 
+              [product]="product"
+            ></app-product-card>
+          </div>
+
+          <!-- Pagination -->
+          <div *ngIf="totalPages > 1" class="mt-8">
+            <nav class="flex items-center justify-center">
+              <div class="flex items-center space-x-2">
+                <!-- Previous Button -->
+                <button 
+                  (click)="onPageChange(currentPage - 1)"
+                  [disabled]="currentPage === 1"
+                  [class.opacity-50]="currentPage === 1"
+                  [class.cursor-not-allowed]="currentPage === 1"
+                  class="px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition"
+                >
+                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                  </svg>
+                </button>
+
+                <!-- Page Numbers -->
+                <button 
+                  *ngFor="let page of visiblePages"
+                  (click)="onPageChange(page)"
+                  [class.bg-blue-500]="page === currentPage"
+                  [class.text-white]="page === currentPage"
+                  [class.text-gray-700]="page !== currentPage"
+                  class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition"
+                >
+                  {{ page }}
+                </button>
+
+                <!-- Next Button -->
+                <button 
+                  (click)="onPageChange(currentPage + 1)"
+                  [disabled]="currentPage === totalPages"
+                  [class.opacity-50]="currentPage === totalPages"
+                  [class.cursor-not-allowed]="currentPage === totalPages"
+                  class="px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition"
+                >
+                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+                  </svg>
+                </button>
+              </div>
+            </nav>
+
+            <!-- Results Info -->
+            <p class="text-center text-sm text-gray-600 mt-4">
+              Showing {{ ((currentPage - 1) * perPage) + 1 }} - {{ Math.min(currentPage * perPage, totalProducts) }} of {{ totalProducts }} products
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
