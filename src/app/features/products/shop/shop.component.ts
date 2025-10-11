@@ -53,8 +53,12 @@ export class ShopComponent implements OnInit, OnDestroy {
   loadingCategories = true;
   
   // Available product attributes (color, size, etc.)
-  availableAttributes: { [key: string]: string[] } = {};
+  // Map attribute slug -> array of term objects { id, slug, name, count }
+  availableAttributes: { [key: string]: { id: number; slug: string; name: string; count?: number }[] } = {};
   selectedAttributes: { [key: string]: string[] } = {};
+  loadingAttributes = false;
+  attributesLoaded = false;
+  attributeTermIdMap: { [key: string]: { [slug: string]: number } } = {};
   
   // Price range
   minPrice = 0;
@@ -139,6 +143,8 @@ export class ShopComponent implements OnInit, OnDestroy {
       next: (categories) => {
         this.categories = categories.filter(c => c.count > 0); // Only categories with products
         this.loadingCategories = false;
+        // After categories, attempt to load attributes lazily
+        this.loadAttributes();
       },
       error: (error) => {
         console.error('Error loading categories:', error);
@@ -162,6 +168,18 @@ export class ShopComponent implements OnInit, OnDestroy {
     // Set price range inputs
     this.priceMin = this.filters.minPrice || 0;
     this.priceMax = this.filters.maxPrice || 1000;
+
+    // Parse attribute params (dynamic: any query param starting with 'pa_')
+    const attrParams: { [key: string]: string[] } = {};
+    Object.keys(params).forEach(key => {
+      if (key.startsWith('pa_') && params[key]) {
+        attrParams[key] = params[key].split(',').filter(Boolean);
+      }
+    });
+    if (Object.keys(attrParams).length > 0) {
+      this.filters.attributes = attrParams;
+      this.selectedAttributes = { ...attrParams };
+    }
   }
 
   loadProducts(): void {
@@ -205,7 +223,23 @@ export class ShopComponent implements OnInit, OnDestroy {
     if (this.filters.featured) {
       params.featured = true;
     }
-    
+    // Attribute filtering (server supports one attribute via attribute & attribute_term with term IDs)
+    if (this.filters.attributes) {
+      const active = Object.entries(this.filters.attributes).filter(([, vals]) => vals && vals.length > 0);
+      if (active.length > 0) {
+        const [primaryAttr, termSlugs] = active[0];
+        const termIds = termSlugs
+          .map(slug => this.attributeTermIdMap[primaryAttr]?.[slug])
+          .filter(id => id !== undefined);
+        if (termIds.length > 0) {
+          (params as any)['attribute'] = primaryAttr;
+            (params as any)['attribute_term'] = termIds.join(',');
+        }
+        if (active.length > 1) {
+          console.warn('[Shop] Multiple attribute groups selected; only first applied server-side.');
+        }
+      }
+    }
     this.store.dispatch(ProductActions.loadProducts({ params }));
   }
 
@@ -223,6 +257,15 @@ export class ShopComponent implements OnInit, OnDestroy {
     if (this.filters.featured) queryParams.featured = 'true';
     if (this.filters.rating) queryParams.rating = this.filters.rating;
     if (this.filters.orderby) queryParams.orderby = this.filters.orderby;
+
+    // Add attribute params
+    if (this.filters.attributes) {
+      Object.entries(this.filters.attributes).forEach(([key, vals]) => {
+        if (vals && vals.length > 0) {
+          queryParams[key] = vals.join(',');
+        }
+      });
+    }
     
     // Replace the whole query params set so cleared filters (like category) are removed
     this.router.navigate([], {
@@ -359,7 +402,8 @@ export class ShopComponent implements OnInit, OnDestroy {
       this.filters.inStock ||
       this.filters.onSale ||
       this.filters.featured ||
-      this.filters.rating
+      this.filters.rating ||
+      (this.filters.attributes && Object.values(this.filters.attributes).some(arr => arr.length > 0))
     );
   }
 
@@ -380,5 +424,81 @@ export class ShopComponent implements OnInit, OnDestroy {
         this.updateUrlAndLoadProducts();
       }
     } catch {}
+  }
+
+  // Attribute logic
+  loadAttributes(): void {
+    if (this.attributesLoaded || this.loadingAttributes) return;
+    this.loadingAttributes = true;
+    this.productService.getAttributesWithTerms().subscribe({
+      next: (attrs) => {
+        attrs.forEach(attr => {
+          if (attr.terms && attr.terms.length > 0) {
+            this.availableAttributes[attr.slug] = attr.terms.map(t => ({ id: t.id, slug: t.slug, name: t.name || t.slug, count: t.count }));
+            this.attributeTermIdMap[attr.slug] = {};
+            attr.terms.forEach(t => {
+              if (t && t.slug !== undefined) {
+                this.attributeTermIdMap[attr.slug][t.slug] = t.id;
+              }
+            });
+          }
+        });
+        this.attributesLoaded = true;
+        this.loadingAttributes = false;
+      },
+      error: (err) => {
+        console.error('[Shop] Failed to load attributes', err);
+        this.loadingAttributes = false;
+      }
+    });
+  }
+
+  toggleAttributeValue(attrKey: string, termSlug: string): void {
+    if (!this.filters.attributes) this.filters.attributes = {};
+    if (!this.selectedAttributes[attrKey]) this.selectedAttributes[attrKey] = [];
+    if (!this.filters.attributes[attrKey]) this.filters.attributes[attrKey] = [];
+
+    const selectedList = this.selectedAttributes[attrKey];
+    const filterList = this.filters.attributes[attrKey];
+    const idx = selectedList.indexOf(termSlug);
+    if (idx >= 0) {
+      selectedList.splice(idx, 1);
+    } else {
+      selectedList.push(termSlug);
+    }
+    // Mirror to filters map
+    this.filters.attributes[attrKey] = [...selectedList];
+    // Remove empty arrays to keep URL clean
+    if (this.filters.attributes[attrKey].length === 0) {
+      delete this.filters.attributes[attrKey];
+    }
+    this.currentPage = 1;
+    this.updateUrlAndLoadProducts();
+  }
+
+  isAttributeSelected(attrKey: string, termSlug: string): boolean {
+    const list = this.selectedAttributes[attrKey];
+    return Array.isArray(list) && list.includes(termSlug);
+  }
+
+  displayTerm(termSlug: string): string {
+    return termSlug.replace(/-/g, ' ');
+  }
+
+  // Color helper logic
+  private colorKeywords = ['color', 'colour', 'colors', 'colours'];
+  isColorAttribute(attrKey: string): boolean {
+    const base = attrKey.replace(/^pa_/, '').toLowerCase();
+    return this.colorKeywords.some(k => base.includes(k));
+  }
+
+  // Try to derive a CSS color from term info (slug or name). Accept hex (#fff, #ffffff) or common names.
+  getTermColor(term: { slug: string; name: string }): string | null {
+    const value = (term.slug || term.name || '').toLowerCase();
+    if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/.test(value)) return value;
+    // Simple whitelist of common color names (extendable):
+    const common = ['red','blue','green','yellow','black','white','gray','grey','orange','purple','pink','teal','navy','maroon','lime','silver','gold','brown'];
+    if (common.includes(value)) return value;
+    return null;
   }
 }

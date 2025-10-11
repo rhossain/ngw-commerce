@@ -289,4 +289,57 @@ export class ProductService {
       })
     );
   }
+
+  /**
+   * Get all global product attributes (e.g. Color, Size)
+   * WooCommerce endpoint: GET /products/attributes
+   */
+  getProductAttributes(): Observable<any[]> {
+    return this.api.get<any[]>('/products/attributes', { per_page: 100 }).pipe(
+      catchError(error => {
+        console.error('Error fetching product attributes:', error);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Get all terms for a specific global attribute
+   * WooCommerce endpoint: GET /products/attributes/{attribute_id}/terms
+   */
+  getAttributeTerms(attributeId: number): Observable<any[]> {
+    return this.api.get<any[]>(`/products/attributes/${attributeId}/terms`, { per_page: 100 }).pipe(
+      catchError(error => {
+        console.error(`Error fetching terms for attribute ${attributeId}:`, error);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Convenience helper to fetch attributes and their terms in parallel
+   */
+  getAttributesWithTerms(): Observable<{ id: number; name: string; slug: string; variation: boolean; terms: any[] }[]> {
+    return this.getProductAttributes().pipe(
+      switchMap(attrs => {
+        if (!attrs || attrs.length === 0) return of([]);
+        const requests = attrs.map(attr =>
+          this.getAttributeTerms(attr.id).pipe(
+            map(terms => ({
+              id: attr.id,
+              name: attr.name,
+              slug: attr.slug, // e.g. 'pa_color'
+              variation: attr.variation,
+              terms
+            }))
+          )
+        );
+        return forkJoin(requests);
+      }),
+      catchError(error => {
+        console.error('Error building attributes with terms:', error);
+        return of([]);
+      })
+    );
+  }
 }

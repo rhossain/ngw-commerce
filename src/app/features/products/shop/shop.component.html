@@ -105,6 +105,23 @@
             </svg>
           </button>
 
+          <!-- Attribute Filter Chips -->
+          <ng-container *ngIf="filters.attributes">
+            <ng-container *ngFor="let attr of (filters.attributes | keyvalue)">
+              <button *ngFor="let term of attr.value"
+                (click)="toggleAttributeValue(attr.key, term)"
+                class="inline-flex items-center gap-1 px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm hover:bg-purple-200 transition">
+                <span class="flex items-center gap-1">
+                  <span *ngIf="isColorAttribute(attr.key) && getTermColor({slug: term, name: term}) as chipCol" class="inline-block w-3 h-3 rounded-full border border-gray-300" [style.background]="chipCol"></span>
+                  {{ attr.key.replace('pa_','') }}: {{ displayTerm(term) }}
+                </span>
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                </svg>
+              </button>
+            </ng-container>
+          </ng-container>
+
           <button 
             (click)="clearFilters()"
             class="px-3 py-1 text-sm text-red-600 hover:text-red-700 font-medium"
@@ -222,6 +239,31 @@
               />
               <span class="ml-2 text-sm text-gray-700">Featured Products</span>
             </label>
+          </div>
+
+          <!-- Dynamic Attributes (Variants) -->
+          <div *ngIf="attributesLoaded && (availableAttributes | keyvalue).length > 0" class="mb-6 pb-6 border-b border-gray-200">
+            <h3 class="text-sm font-medium text-gray-900 mb-3">Attributes</h3>
+            <div class="space-y-4">
+              <div *ngFor="let attr of (availableAttributes | keyvalue)" class="border border-gray-100 rounded-md">
+                <div class="px-2 py-2 bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-600">{{ attr.key.replace('pa_', '') }}</div>
+                <div class="p-2 max-h-44 overflow-y-auto space-y-1">
+                  <label *ngFor="let term of attr.value" class="flex items-center justify-between text-sm px-2 py-1 rounded hover:bg-gray-50 cursor-pointer group">
+                    <div class="flex items-center">
+                      <input type="checkbox"
+                        [checked]="isAttributeSelected(attr.key, term.slug)"
+                        (change)="toggleAttributeValue(attr.key, term.slug)"
+                        class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
+                      <span class="ml-2 capitalize flex items-center gap-2">
+                        <span *ngIf="isColorAttribute(attr.key) && getTermColor(term) as col" class="inline-block w-4 h-4 rounded border border-gray-300 shadow-sm" [style.background]="col" title="{{ term.name }}"></span>
+                        {{ term.name || displayTerm(term.slug) }}
+                      </span>
+                    </div>
+                    <span class="text-xs text-gray-500 group-hover:text-gray-700" *ngIf="term.count !== undefined">{{ term.count }}</span>
+                  </label>
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- Clear Filters -->
@@ -342,6 +384,29 @@
                 />
                 <span class="ml-2 text-sm text-gray-700">Featured Products</span>
               </label>
+            </div>
+
+            <!-- Mobile Attributes -->
+            <div *ngIf="attributesLoaded && (availableAttributes | keyvalue).length > 0" class="mt-6 space-y-4">
+              <h3 class="text-sm font-medium text-gray-900 mb-1">Attributes</h3>
+              <div *ngFor="let attr of (availableAttributes | keyvalue)" class="border border-gray-200 rounded-md">
+                <div class="px-3 py-2 bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-600">{{ attr.key.replace('pa_', '') }}</div>
+                <div class="p-2 max-h-48 overflow-y-auto space-y-1">
+                  <label *ngFor="let term of attr.value" class="flex items-center justify-between text-sm px-2 py-1 rounded hover:bg-gray-50 cursor-pointer group">
+                    <div class="flex items-center">
+                      <input type="checkbox"
+                        [checked]="isAttributeSelected(attr.key, term.slug)"
+                        (change)="toggleAttributeValue(attr.key, term.slug)"
+                        class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
+                      <span class="ml-2 capitalize flex items-center gap-2">
+                        <span *ngIf="isColorAttribute(attr.key) && getTermColor(term) as col" class="inline-block w-4 h-4 rounded border border-gray-300 shadow-sm" [style.background]="col" title="{{ term.name }}"></span>
+                        {{ term.name || displayTerm(term.slug) }}
+                      </span>
+                    </div>
+                    <span class="text-xs text-gray-500 group-hover:text-gray-700" *ngIf="term.count !== undefined">{{ term.count }}</span>
+                  </label>
+                </div>
+              </div>
             </div>
 
             <!-- Mobile Apply & Clear -->
