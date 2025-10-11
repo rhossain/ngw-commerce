@@ -127,22 +127,30 @@
           <div class="mb-6">
             <h3 class="text-sm font-medium text-gray-900 mb-3">Categories</h3>
             <div *ngIf="loadingCategories" class="text-sm text-gray-500">Loading...</div>
-            <div *ngIf="!loadingCategories" class="space-y-2">
-              <label 
-                *ngFor="let category of categories"
-                class="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded transition"
+            <div *ngIf="!loadingCategories" class="space-y-1">
+              <!-- All Categories link -->
+              <button type="button"
+                (click)="onCategoryClick('')"
+                class="w-full text-left group flex items-center gap-2 px-2 py-2 rounded transition border border-transparent"
+                [class.bg-blue-50]="!filters.category"
+                [class.border-blue-400]="!filters.category"
+                [class.text-blue-700]="!filters.category"
+                [class.hover:bg-gray-50]="filters.category"
               >
-                <input 
-                  type="radio"
-                  name="category"
-                  [value]="category.slug"
-                  [checked]="filters.category === category.slug"
-                  (change)="onCategoryChange(category.slug)"
-                  class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                />
-                <span class="ml-2 text-sm text-gray-700">{{ category.name }}</span>
-                <span class="ml-auto text-xs text-gray-500">({{ category.count }})</span>
-              </label>
+                <span class="text-sm font-medium">All Categories</span>
+                <span class="ml-auto text-xs" [class.text-blue-600]="!filters.category" [class.text-gray-500]="filters.category">({{ totalCategoryCount }})</span>
+              </button>
+              <button type="button"
+                *ngFor="let category of categories"
+                (click)="onCategoryClick(category.slug)"
+                class="w-full text-left group flex items-center gap-2 px-2 py-2 rounded transition border border-transparent hover:bg-gray-50"
+                [class.bg-blue-50]="filters.category === category.slug"
+                [class.border-blue-400]="filters.category === category.slug"
+                [class.text-blue-700]="filters.category === category.slug"
+              >
+                <span class="text-sm" [class.font-medium]="filters.category === category.slug">{{ category.name }}</span>
+                <span class="ml-auto text-xs" [class.text-blue-600]="filters.category === category.slug" [class.text-gray-500]="filters.category !== category.slug">({{ category.count }})</span>
+              </button>
             </div>
           </div>
 
@@ -254,22 +262,29 @@
             <div class="mb-6">
               <h3 class="text-sm font-medium text-gray-900 mb-3">Categories</h3>
               <div *ngIf="loadingCategories" class="text-sm text-gray-500">Loading...</div>
-              <div *ngIf="!loadingCategories" class="space-y-2">
-                <label 
-                  *ngFor="let category of categories"
-                  class="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded transition"
+              <div *ngIf="!loadingCategories" class="space-y-1">
+                <button type="button"
+                  (click)="onCategoryClick(''); toggleMobileFilters()"
+                  class="w-full text-left flex items-center gap-2 px-2 py-2 rounded transition border border-transparent"
+                  [class.bg-blue-50]="!filters.category"
+                  [class.border-blue-400]="!filters.category"
+                  [class.text-blue-700]="!filters.category"
+                  [class.hover:bg-gray-50]="filters.category"
                 >
-                  <input 
-                    type="radio"
-                    name="mobile-category"
-                    [value]="category.slug"
-                    [checked]="filters.category === category.slug"
-                    (change)="onCategoryChange(category.slug); toggleMobileFilters()"
-                    class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                  />
-                  <span class="ml-2 text-sm text-gray-700">{{ category.name }}</span>
-                  <span class="ml-auto text-xs text-gray-500">({{ category.count }})</span>
-                </label>
+                  <span class="text-sm font-medium">All Categories</span>
+                  <span class="ml-auto text-xs" [class.text-blue-600]="!filters.category" [class.text-gray-500]="filters.category">({{ totalCategoryCount }})</span>
+                </button>
+                <button type="button"
+                  *ngFor="let category of categories"
+                  (click)="onCategoryClick(category.slug); toggleMobileFilters()"
+                  class="w-full text-left flex items-center gap-2 px-2 py-2 rounded transition border border-transparent hover:bg-gray-50"
+                  [class.bg-blue-50]="filters.category === category.slug"
+                  [class.border-blue-400]="filters.category === category.slug"
+                  [class.text-blue-700]="filters.category === category.slug"
+                >
+                  <span class="text-sm" [class.font-medium]="filters.category === category.slug">{{ category.name }}</span>
+                  <span class="ml-auto text-xs" [class.text-blue-600]="filters.category === category.slug" [class.text-gray-500]="filters.category !== category.slug">({{ category.count }})</span>
+                </button>
               </div>
             </div>
 

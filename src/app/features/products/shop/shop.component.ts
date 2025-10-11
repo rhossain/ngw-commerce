@@ -177,7 +177,13 @@ export class ShopComponent implements OnInit, OnDestroy {
     }
     
     if (this.filters.category) {
-      params.category = this.filters.category;
+      // WooCommerce REST API expects a category ID (or comma-separated IDs), not a slug, for the 'category' param
+      const catId = this.getCategoryIdFromSlug(this.filters.category);
+      if (catId) {
+        params.category = String(catId);
+      } else {
+        console.warn('[Shop] Category slug not found among loaded categories:', this.filters.category);
+      }
     }
     
     if (this.filters.minPrice !== undefined) {
@@ -218,10 +224,10 @@ export class ShopComponent implements OnInit, OnDestroy {
     if (this.filters.rating) queryParams.rating = this.filters.rating;
     if (this.filters.orderby) queryParams.orderby = this.filters.orderby;
     
+    // Replace the whole query params set so cleared filters (like category) are removed
     this.router.navigate([], {
       relativeTo: this.route,
-      queryParams,
-      queryParamsHandling: 'merge'
+      queryParams
     });
   }
 
@@ -234,6 +240,21 @@ export class ShopComponent implements OnInit, OnDestroy {
     this.filters.category = categorySlug;
     this.currentPage = 1;
     this.updateUrlAndLoadProducts();
+  }
+
+  // New click handler used by link-style category buttons
+  onCategoryClick(slug: string): void {
+    this.onCategoryChange(slug);
+    // Persist last chosen category (even empty string for All) for future visits
+    try {
+      if (slug) {
+        localStorage.setItem('shop:lastCategory', slug);
+      } else {
+        localStorage.removeItem('shop:lastCategory');
+      }
+    } catch (e) {
+      console.warn('[Shop] Unable to access localStorage for category persistence', e);
+    }
   }
 
   onPriceRangeChange(): void {
@@ -283,6 +304,11 @@ export class ShopComponent implements OnInit, OnDestroy {
       relativeTo: this.route,
       queryParams: {}
     });
+    try { localStorage.removeItem('shop:lastCategory'); } catch {}
+  }
+
+  private getCategoryIdFromSlug(slug: string): number | undefined {
+    return this.categories.find(c => c.slug === slug)?.id;
   }
 
   // Pagination
@@ -335,5 +361,24 @@ export class ShopComponent implements OnInit, OnDestroy {
       this.filters.featured ||
       this.filters.rating
     );
+  }
+
+  // Aggregate total product count across categories (used for All Categories display)
+  get totalCategoryCount(): number {
+    return this.categories.reduce((sum, c) => sum + (c.count || 0), 0);
+  }
+
+  // After categories load, if no category in URL but last stored exists, apply it
+  private applyPersistedCategoryIfNeeded(): void {
+    if (this.filters.category) return; // URL already defines it
+    try {
+      const saved = localStorage.getItem('shop:lastCategory');
+      if (saved && this.categories.some(c => c.slug === saved)) {
+        this.filters.category = saved;
+        this.currentPage = 1;
+        // Do not push to URL immediately to avoid double loading; call update explicitly
+        this.updateUrlAndLoadProducts();
+      }
+    } catch {}
   }
 }
