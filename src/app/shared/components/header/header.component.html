@@ -26,13 +26,58 @@
 
       <!-- Right Side Icons -->
       <div class="flex items-center space-x-4">
-        <!-- Search Icon -->
-        <button class="p-2 text-gray-700 hover:text-primary-600 transition">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-          </svg>
-        </button>
+        <!-- Global Search -->
+        <div id="global-search-wrapper" class="relative hidden lg:block" (keydown)="onKeyDown($event)">
+          <div class="flex items-center gap-2">
+            <div class="relative">
+              <input
+                type="text"
+                class="w-72 pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                placeholder="Search products..."
+                [value]="searchTerm"
+                (focus)="focusSearch()"
+                (input)="onSearchInput($any($event.target).value)"
+                autocomplete="off"
+              />
+              <svg class="w-5 h-5 text-gray-400 absolute left-2 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+              </svg>
+              <button *ngIf="searchTerm" (click)="clearSearch()" class="absolute right-2 top-2 text-gray-400 hover:text-gray-600">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+            <select class="border border-gray-300 rounded-lg py-2 px-2 text-sm focus:ring-primary-500 focus:border-primary-500" (change)="onCategoryChange($any($event.target).value)">
+              <option value="">All Categories</option>
+              <option *ngFor="let c of categories" [value]="c.slug">{{ c.name }}</option>
+            </select>
+          </div>
+          <!-- Dropdown -->
+          <div *ngIf="searchOpen && showDropdown" class="absolute mt-2 w-[26rem] bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-50">
+            <div *ngIf="searchTerm.length < 3" class="p-4 text-sm text-gray-500">Type at least 3 characters…</div>
+            <div *ngIf="searchTerm.length >= 3">
+              <div *ngIf="searching" class="p-4 text-sm text-gray-500 flex items-center gap-2">
+                <span class="animate-spin inline-block w-4 h-4 border-2 border-gray-300 border-t-primary-500 rounded-full"></span>
+                Searching…
+              </div>
+              <ul *ngIf="!searching && suggestions.length > 0" role="listbox" class="max-h-80 overflow-y-auto divide-y divide-gray-100">
+                <li *ngFor="let p of suggestions" class="hover:bg-gray-50">
+                  <a [routerLink]="['/products', p.slug]" (click)="clearSearch()" class="flex items-start gap-3 px-4 py-3">
+                    <img *ngIf="p.images && p.images.length" [src]="p.images[0].src" class="w-10 h-10 object-cover rounded" alt="{{p.name}}" />
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-medium text-gray-800 line-clamp-1">{{ p.name }}</p>
+                      <p class="text-xs text-gray-500" *ngIf="p.price_html" [innerHTML]="p.price_html"></p>
+                    </div>
+                  </a>
+                </li>
+              </ul>
+              <div *ngIf="!searching && suggestions.length === 0" class="p-4 text-sm text-gray-500">No matching products found.</div>
+              <div class="border-t border-gray-200 bg-gray-50 flex items-center justify-between px-3 py-2 text-xs text-gray-600" *ngIf="searchTerm.length >=3">
+                <a [routerLink]="['/shop']" [queryParams]="{ search: searchTerm, category: chosenCategorySlug || null }" (click)="clearSearch()" class="px-3 py-1 bg-primary-600 text-white rounded-md text-xs hover:bg-primary-700">Show All</a>
+                <span *ngIf="suggestions.length > 0" class="italic">Showing top {{ suggestions.length }} results</span>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <!-- Wishlist -->
         <a routerLink="/wishlist" class="relative p-2 text-gray-700 hover:text-primary-600 transition">

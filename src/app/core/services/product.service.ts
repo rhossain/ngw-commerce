@@ -291,6 +291,70 @@ export class ProductService {
   }
 
   /**
+   * Lightweight suggestion query for header autocomplete.
+   * Uses core products endpoint with small per_page for performance.
+   */
+  suggestProducts(term: string, categoryId?: number, limit: number = 5): Observable<Product[]> {
+    if (!term || term.trim().length < 3) {
+      return of([]);
+    }
+    const cleaned = term.trim();
+    const params: any = {
+      search: cleaned,
+      per_page: limit,
+      status: 'publish'
+    }; // Avoid unsupported orderby for suggestions
+    if (categoryId) {
+      params.category = String(categoryId);
+    }
+    return this.api.get<any[]>('/products', params).pipe(
+      switchMap(products => {
+        if (products && products.length > 0) {
+          return of(this.rankAndTrim(products, cleaned, limit));
+        }
+        // Fallback 1: try slug-style (replace spaces with hyphen)
+        const slugGuess = cleaned.toLowerCase().replace(/\s+/g, '-');
+        return this.api.get<any[]>('/products', { slug: slugGuess }).pipe(
+          switchMap(slugProducts => {
+            if (slugProducts && slugProducts.length > 0) {
+              return of(this.rankAndTrim(slugProducts, cleaned, limit));
+            }
+            // Fallback 2: broaden by splitting words and searching first word
+            const firstWord = cleaned.split(/\s+/)[0];
+            if (firstWord && firstWord.length >= 3 && firstWord !== cleaned) {
+              return this.api.get<any[]>('/products', { search: firstWord, per_page: limit, status: 'publish' }).pipe(
+                map(p => this.rankAndTrim(p, cleaned, limit)),
+                catchError(() => of([]))
+              );
+            }
+            return of([]);
+          })
+        );
+      }),
+      catchError(err => {
+        console.warn('suggestProducts error', err);
+        return of([]);
+      })
+    );
+  }
+
+  private rankAndTrim(products: any[], term: string, limit: number): Product[] {
+    const t = term.toLowerCase();
+    const scored = products.map(p => {
+      const name = (p.name || '').toLowerCase();
+      let score = 0;
+      if (name === t) score += 100; // exact
+      if (name.startsWith(t)) score += 40;
+      if (name.includes(t)) score += 20;
+      // Partial word matches
+      const words: string[] = name.split(/\s+/);
+      if (words.some((w: string) => w.startsWith(t))) score += 10;
+      return { p, score };
+    });
+    return scored.sort((a,b) => b.score - a.score).slice(0, limit).map(s => s.p as Product);
+  }
+
+  /**
    * Get all global product attributes (e.g. Color, Size)
    * WooCommerce endpoint: GET /products/attributes
    */
