@@ -12,4 +12,7 @@ export const environment = {
   defaultCurrency: 'USD',
   defaultLanguage: 'en',
   itemsPerPage: 12,
+  freeShippingThreshold: 100,
+  flatShippingEstimate: 8.99,
+  savedCartSyncUrl: 'https://woocommerce.rshossain.com/wp-json/wc-angular/v1/saved-cart'
 };
