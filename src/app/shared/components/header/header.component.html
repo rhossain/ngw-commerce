@@ -59,9 +59,9 @@
                 <span class="animate-spin inline-block w-4 h-4 border-2 border-gray-300 border-t-primary-500 rounded-full"></span>
                 Searching…
               </div>
-              <ul *ngIf="!searching && suggestions.length > 0" role="listbox" class="max-h-80 overflow-y-auto divide-y divide-gray-100">
-                <li *ngFor="let p of suggestions" class="hover:bg-gray-50">
-                  <a [routerLink]="['/products', p.slug]" (click)="clearSearch()" class="flex items-start gap-3 px-4 py-3">
+              <ul *ngIf="!searching && suggestions.length > 0" role="listbox" class="max-h-80 overflow-y-auto divide-y divide-gray-100" [attr.aria-activedescendant]="activeIndex >=0 ? 'suggest-'+activeIndex : null">
+                <li *ngFor="let p of suggestions; let i = index" role="option" [id]="'suggest-'+i" [attr.aria-selected]="i === activeIndex" class="hover:bg-gray-50" [class.bg-gray-100]="i === activeIndex">
+                  <a [routerLink]="['/products', p.slug]" (click)="clearSearch()" class="flex items-start gap-3 px-4 py-3 focus:outline-none">
                     <img *ngIf="p.images && p.images.length" [src]="p.images[0].src" class="w-10 h-10 object-cover rounded" alt="{{p.name}}" />
                     <div class="flex-1 min-w-0">
                       <p class="text-sm font-medium text-gray-800 line-clamp-1">{{ p.name }}</p>

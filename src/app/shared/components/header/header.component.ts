@@ -29,10 +29,12 @@ export class HeaderComponent implements OnInit, OnDestroy {
   suggestions: Product[] = [];
   searching = false;
   showDropdown = false;
+  activeIndex: number = -1; // keyboard highlight index
   chosenCategorySlug: string | '' = '';
   categories: { id: number; name: string; slug: string }[] = [];
   private searchInput$ = new Subject<string>();
   private destroy$ = new Subject<void>();
+  private suggestionCache = new Map<string, Product[]>(); // key: term|catId
 
   constructor(
     private authService: AuthService,
@@ -74,7 +76,13 @@ export class HeaderComponent implements OnInit, OnDestroy {
         }
         this.searching = true;
         const catId = this.getSelectedCategoryId();
+        const cacheKey = `${term.toLowerCase()}|${catId || ''}`;
+        if (this.suggestionCache.has(cacheKey)) {
+          this.searching = false; // immediate
+          return of(this.suggestionCache.get(cacheKey)!);
+        }
         return this.productService.suggestProducts(term, catId).pipe(
+          tap(results => this.suggestionCache.set(cacheKey, results)),
           catchError(() => of([] as Product[]))
         );
       }),
@@ -82,6 +90,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     ).subscribe(results => {
       this.suggestions = results;
       this.showDropdown = true;
+      this.activeIndex = results.length ? 0 : -1;
     });
   }
 
@@ -94,6 +103,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.searchTerm = value;
     this.searchInput$.next(value.trim());
     this.searchOpen = true;
+    this.activeIndex = -1; // reset
   }
 
   clearSearch(): void {
@@ -149,6 +159,27 @@ export class HeaderComponent implements OnInit, OnDestroy {
   onKeyDown(event: KeyboardEvent): void {
     if (event.key === 'Escape') {
       this.clearSearch();
+      return;
+    }
+    if (!this.showDropdown || this.suggestions.length === 0) return;
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      this.activeIndex = (this.activeIndex + 1) % this.suggestions.length;
+      return;
+    }
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      this.activeIndex = (this.activeIndex - 1 + this.suggestions.length) % this.suggestions.length;
+      return;
+    }
+    if (event.key === 'Enter' && this.activeIndex >= 0) {
+      const product = this.suggestions[this.activeIndex];
+      if (product) {
+        // rely on routerLink navigation - simulate click by constructing URL
+        // Could inject Router, but simpler: set window.location
+        window.location.href = `/products/${product.slug}`;
+        this.clearSearch();
+      }
     }
   }
 
