@@ -307,14 +307,14 @@ export class ProductService {
     if (categoryId) {
       params.category = String(categoryId);
     }
-    return this.api.get<any[]>('/products', params).pipe(
+    return this.api.get<any[]>('/products', params, { skipLoading: true }).pipe(
       switchMap(products => {
         if (products && products.length > 0) {
           return of(this.rankAndTrim(products, cleaned, limit));
         }
         // Fallback 1: try slug-style (replace spaces with hyphen)
         const slugGuess = cleaned.toLowerCase().replace(/\s+/g, '-');
-        return this.api.get<any[]>('/products', { slug: slugGuess }).pipe(
+        return this.api.get<any[]>('/products', { slug: slugGuess }, { skipLoading: true }).pipe(
           switchMap(slugProducts => {
             if (slugProducts && slugProducts.length > 0) {
               return of(this.rankAndTrim(slugProducts, cleaned, limit));
@@ -322,7 +322,7 @@ export class ProductService {
             // Fallback 2: broaden by splitting words and searching first word
             const firstWord = cleaned.split(/\s+/)[0];
             if (firstWord && firstWord.length >= 3 && firstWord !== cleaned) {
-              return this.api.get<any[]>('/products', { search: firstWord, per_page: limit, status: 'publish' }).pipe(
+              return this.api.get<any[]>('/products', { search: firstWord, per_page: limit, status: 'publish' }, { skipLoading: true }).pipe(
                 map(p => this.rankAndTrim(p, cleaned, limit)),
                 catchError(() => of([]))
               );

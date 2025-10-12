@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpHeaders, HttpContext } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { SKIP_GLOBAL_LOADING } from '../../core/http-context-tokens';
 
 @Injectable({
   providedIn: 'root'
@@ -18,21 +19,30 @@ export class ApiService {
     });
   }
 
-  get<T>(endpoint: string, params?: any): Observable<T> {
+  get<T>(endpoint: string, params?: any, options?: { skipLoading?: boolean; headers?: HttpHeaders }): Observable<T> {
     const url = `${environment.woocommerceApi}${endpoint}`;
     const httpParams = this.buildParams(params);
-    
+    let headers = this.getAuthHeaders();
+    if (options?.headers) {
+      options.headers.keys().forEach(key => {
+        const val = options.headers!.get(key);
+        if (val !== null) headers = headers.set(key, val);
+      });
+    }
+    const context = new HttpContext();
+    if (options?.skipLoading) {
+      context.set(SKIP_GLOBAL_LOADING, true);
+    }
+
     console.log('[API Service] GET Request:', {
       url,
       endpoint,
       params,
+      skipLoading: options?.skipLoading,
       fullUrl: `${url}?${httpParams.toString()}`
     });
-    
-    return this.http.get<T>(url, { 
-      headers: this.getAuthHeaders(),
-      params: httpParams
-    });
+
+    return this.http.get<T>(url, { headers, params: httpParams, context });
   }
 
   post<T>(endpoint: string, body: any): Observable<T> {

@@ -1,46 +1,49 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { guestGuard } from './core/guards/guest.guard';
+import { ROUTE_PATHS } from './core/constants/route-paths';
 
 export const routes: Routes = [
   {
-    path: '',
+    path: ROUTE_PATHS.HOME,
     loadComponent: () => import('./features/home/home.component').then(m => m.HomeComponent),
-    title: 'Home - WooCommerce Shop'
+    title: 'Home - WooCommerce Shop',
+    data: { preload: true }
   },
   {
-    path: 'shop',
+    path: ROUTE_PATHS.SHOP,
     loadComponent: () => import('./features/products/shop/shop.component').then(m => m.ShopComponent),
-    title: 'Shop - WooCommerce Shop'
+    title: 'Shop - WooCommerce Shop',
+    data: { preload: true }
   },
   {
-    path: 'products',
+    path: ROUTE_PATHS.PRODUCTS,
     loadComponent: () => import('./features/products/product-list/product-list.component').then(m => m.ProductListComponent),
     title: 'Products - WooCommerce Shop'
   },
   {
-    path: 'products/:slug',
+    path: 'products/:slug', // kept literal since constant includes param; optional to use ROUTE_PATHS.PRODUCT_DETAIL
     loadComponent: () => import('./features/products/product-detail/product-detail.component').then(m => m.ProductDetailComponent),
     title: 'Product Details - WooCommerce Shop'
   },
   {
-    path: 'cart',
+    path: ROUTE_PATHS.CART,
     loadComponent: () => import('./features/cart/cart.component').then(m => m.CartComponent),
     title: 'Shopping Cart - WooCommerce Shop'
   },
   {
-    path: 'checkout',
+    path: ROUTE_PATHS.CHECKOUT,
     loadComponent: () => import('./features/checkout/checkout.component').then(m => m.CheckoutComponent),
     title: 'Checkout - WooCommerce Shop'
   },
   {
-    path: 'wishlist',
+    path: ROUTE_PATHS.WISHLIST,
     loadComponent: () => import('./features/wishlist/wishlist.component').then(m => m.WishlistComponent),
     canActivate: [authGuard],
     title: 'Wishlist - WooCommerce Shop'
   },
   {
-    path: 'account',
+    path: ROUTE_PATHS.ACCOUNT,
     children: [
       {
         path: 'login',
