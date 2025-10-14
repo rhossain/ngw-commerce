@@ -1,6 +1,27 @@
 export const environment = {
   production: true,
   apiUrl: 'https://woocommerce.rshossain.com/wp-json',
+  
+  // Simple JWT Login Configuration
+  auth: {
+    baseUrl: '/simple-jwt-login/v1',
+    endpoints: {
+      login: '/auth',
+      register: '/users',
+      refresh: '/auth/refresh',
+      validate: '/auth/validate',
+      revoke: '/auth/revoke'
+    },
+    storage: {
+      tokenKey: 'auth_token',
+      refreshTokenKey: 'refresh_token',
+      userKey: 'current_user',
+      tokenExpiryKey: 'token_expiry'
+    },
+    tokenRefreshThreshold: 300, // Refresh token 5 minutes before expiry (in seconds)
+    autoRefresh: true
+  },
+  
   woocommerceApi: 'https://woocommerce.rshossain.com/wp-json/wc/v3',
   storeApi: 'https://woocommerce.rshossain.com/wp-json/wc/store/v1',
   customApi: 'https://woocommerce.rshossain.com/wp-json/wc-angular/v1',

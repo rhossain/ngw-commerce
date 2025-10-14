@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
+import { take } from 'rxjs/operators';
 import { Cart } from '../../core/models/cart.model';
 import { Address } from '../../core/models/user.model';
 import { CartService } from '../../core/services/cart.service';
@@ -85,7 +86,9 @@ export class CheckoutComponent implements OnInit {
   }
 
   checkAuthStatus(): void {
-    this.isGuest = !this.authService.isAuthenticated();
+    this.authService.isAuthenticated$.pipe(take(1)).subscribe(isAuth => {
+      this.isGuest = !isAuth;
+    });
   }
 
   loadUserAddresses(): void {
