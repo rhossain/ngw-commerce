@@ -23,6 +23,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   cartItemsCount: number = 0;
   wishlistCount: number = 0;
   mobileMenuOpen = false;
+  userMenuOpen = false;
   // Search state
   searchTerm = '';
   searchOpen = false;
@@ -154,6 +155,9 @@ export class HeaderComponent implements OnInit, OnDestroy {
     if (!target.closest('#global-search-wrapper')) {
       this.showDropdown = false;
     }
+    if (!target.closest('#user-menu')) {
+      this.userMenuOpen = false;
+    }
   }
 
   onKeyDown(event: KeyboardEvent): void {
@@ -185,9 +189,14 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   logout(): void {
     this.authService.logout();
+    this.userMenuOpen = false;
   }
 
   toggleMobileMenu(): void {
     this.mobileMenuOpen = !this.mobileMenuOpen;
+  }
+
+  toggleUserMenu(): void {
+    this.userMenuOpen = !this.userMenuOpen;
   }
 }
