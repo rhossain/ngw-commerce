@@ -15,6 +15,7 @@ import { WishlistService } from '../../../core/services/wishlist.service';
 import { ProductService } from '../../../core/services/product.service';
 import { AttributeService } from '../../../core/services/attribute.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { AuthModalService } from '../../../core/services/auth-modal.service';
 import { ToastrService } from 'ngx-toastr';
 import { ProductCardComponent } from '../../../shared/components/product-card/product-card.component';
 import { VariationSwatchComponent, SwatchOption } from '../../../shared/components/variation-swatch/variation-swatch.component';
@@ -70,6 +71,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     private productService: ProductService,
     private attributeService: AttributeService,
     private authService: AuthService,
+    private authModalService: AuthModalService,
     private toastr: ToastrService
   ) {
     this.product$ = this.store.select(ProductSelectors.selectSelectedProduct);
@@ -381,9 +383,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     // Check if user is logged in
     if (!currentUser) {
       this.toastr.warning('Please login to submit a review');
-      this.router.navigate(['/account/login'], { 
-        queryParams: { returnUrl: `/products/${product.slug}` }
-      });
+      this.authModalService.open('login');
       return;
     }
 

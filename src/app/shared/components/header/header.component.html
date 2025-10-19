@@ -131,9 +131,9 @@
         </div>
 
         <ng-template #loginButton>
-          <a routerLink="/account/login" class="text-gray-700 hover:text-primary-600 transition">
+          <button (click)="openLoginModal()" class="text-gray-700 hover:text-primary-600 transition">
             Login
-          </a>
+          </button>
         </ng-template>
 
         <!-- Mobile Menu Button -->
@@ -151,7 +151,16 @@
       <a routerLink="/shop" class="block py-2 text-gray-700 hover:text-primary-600">Shop</a>
       <a routerLink="/products" class="block py-2 text-gray-700 hover:text-primary-600">Products</a>
       <a routerLink="/wishlist" class="block py-2 text-gray-700 hover:text-primary-600">Wishlist</a>
-      <a routerLink="/account/profile" class="block py-2 text-gray-700 hover:text-primary-600">My Account</a>
+      
+      <div *ngIf="isAuthenticated$ | async; else mobileLoginButtons">
+        <a routerLink="/account/profile" class="block py-2 text-gray-700 hover:text-primary-600">My Account</a>
+        <button (click)="logout()" class="block w-full text-left py-2 text-gray-700 hover:text-primary-600">Logout</button>
+      </div>
+      
+      <ng-template #mobileLoginButtons>
+        <button (click)="openLoginModal(); toggleMobileMenu()" class="block w-full text-left py-2 text-gray-700 hover:text-primary-600">Login</button>
+        <button (click)="openRegisterModal(); toggleMobileMenu()" class="block w-full text-left py-2 text-gray-700 hover:text-primary-600">Register</button>
+      </ng-template>
     </div>
   </nav>
 </header>

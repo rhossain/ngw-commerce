@@ -1,0 +1,236 @@
+<!-- Modal Overlay -->
+<div *ngIf="isOpen" 
+     class="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50 flex items-center justify-center p-4"
+     (click)="closeModal()">
+  
+  <!-- Modal Content -->
+  <div class="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto"
+       (click)="onModalContentClick($event)">
+    
+    <!-- Close Button -->
+    <div class="flex justify-end p-4 pb-0">
+      <button (click)="closeModal()" 
+              class="text-gray-400 hover:text-gray-600 transition"
+              type="button">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Modal Header with Tabs -->
+    <div class="px-6 pb-4">
+      <div class="flex border-b border-gray-200">
+        <button (click)="switchMode('login')"
+                [class.border-b-2]="currentMode === 'login'"
+                [class.border-primary-600]="currentMode === 'login'"
+                [class.text-primary-600]="currentMode === 'login'"
+                [class.text-gray-500]="currentMode !== 'login'"
+                class="flex-1 py-3 text-center font-medium transition"
+                type="button">
+          Login
+        </button>
+        <button (click)="switchMode('register')"
+                [class.border-b-2]="currentMode === 'register'"
+                [class.border-primary-600]="currentMode === 'register'"
+                [class.text-primary-600]="currentMode === 'register'"
+                [class.text-gray-500]="currentMode !== 'register'"
+                class="flex-1 py-3 text-center font-medium transition"
+                type="button">
+          Register
+        </button>
+      </div>
+    </div>
+
+    <!-- Modal Body -->
+    <div class="px-6 pb-6">
+      
+      <!-- Login Form -->
+      <div *ngIf="currentMode === 'login'">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">Welcome Back!</h2>
+        
+        <form [formGroup]="loginForm" (ngSubmit)="onSubmitLogin()">
+          <!-- Email -->
+          <div class="mb-4">
+            <label for="login-email" class="block text-sm font-medium text-gray-700 mb-2">
+              Email Address
+            </label>
+            <input type="email"
+                   id="login-email"
+                   formControlName="username"
+                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                   placeholder="you@example.com"
+                   [class.border-red-500]="loginForm.get('username')?.invalid && loginForm.get('username')?.touched">
+            <div *ngIf="loginForm.get('username')?.invalid && loginForm.get('username')?.touched" 
+                 class="text-red-500 text-sm mt-1">
+              <span *ngIf="loginForm.get('username')?.errors?.['required']">Email is required</span>
+              <span *ngIf="loginForm.get('username')?.errors?.['email']">Please enter a valid email</span>
+            </div>
+          </div>
+
+          <!-- Password -->
+          <div class="mb-6">
+            <label for="login-password" class="block text-sm font-medium text-gray-700 mb-2">
+              Password
+            </label>
+            <input type="password"
+                   id="login-password"
+                   formControlName="password"
+                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                   placeholder="••••••••"
+                   [class.border-red-500]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched">
+            <div *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched" 
+                 class="text-red-500 text-sm mt-1">
+              <span *ngIf="loginForm.get('password')?.errors?.['required']">Password is required</span>
+              <span *ngIf="loginForm.get('password')?.errors?.['minlength']">Password must be at least 6 characters</span>
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit"
+                  [disabled]="isSubmitting"
+                  class="w-full bg-primary-600 text-white py-3 rounded-lg font-medium hover:bg-primary-700 transition disabled:opacity-50 disabled:cursor-not-allowed">
+            <span *ngIf="!isSubmitting">Login</span>
+            <span *ngIf="isSubmitting">Logging in...</span>
+          </button>
+
+          <!-- Switch to Register -->
+          <p class="mt-4 text-center text-sm text-gray-600">
+            Don't have an account? 
+            <button type="button" (click)="switchMode('register')" class="text-primary-600 hover:text-primary-700 font-medium">
+              Sign up
+            </button>
+          </p>
+        </form>
+      </div>
+
+      <!-- Register Form -->
+      <div *ngIf="currentMode === 'register'">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">Create Account</h2>
+        
+        <form [formGroup]="registerForm" (ngSubmit)="onSubmitRegister()">
+          <!-- First Name -->
+          <div class="mb-4">
+            <label for="register-first-name" class="block text-sm font-medium text-gray-700 mb-2">
+              First Name
+            </label>
+            <input type="text"
+                   id="register-first-name"
+                   formControlName="first_name"
+                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                   placeholder="John"
+                   [class.border-red-500]="registerForm.get('first_name')?.invalid && registerForm.get('first_name')?.touched">
+            <div *ngIf="registerForm.get('first_name')?.invalid && registerForm.get('first_name')?.touched" 
+                 class="text-red-500 text-sm mt-1">
+              First name is required
+            </div>
+          </div>
+
+          <!-- Last Name -->
+          <div class="mb-4">
+            <label for="register-last-name" class="block text-sm font-medium text-gray-700 mb-2">
+              Last Name
+            </label>
+            <input type="text"
+                   id="register-last-name"
+                   formControlName="last_name"
+                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                   placeholder="Doe"
+                   [class.border-red-500]="registerForm.get('last_name')?.invalid && registerForm.get('last_name')?.touched">
+            <div *ngIf="registerForm.get('last_name')?.invalid && registerForm.get('last_name')?.touched" 
+                 class="text-red-500 text-sm mt-1">
+              Last name is required
+            </div>
+          </div>
+
+          <!-- Email -->
+          <div class="mb-4">
+            <label for="register-email" class="block text-sm font-medium text-gray-700 mb-2">
+              Email Address
+            </label>
+            <input type="email"
+                   id="register-email"
+                   formControlName="email"
+                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                   placeholder="you@example.com"
+                   [class.border-red-500]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched">
+            <div *ngIf="registerForm.get('email')?.invalid && registerForm.get('email')?.touched" 
+                 class="text-red-500 text-sm mt-1">
+              <span *ngIf="registerForm.get('email')?.errors?.['required']">Email is required</span>
+              <span *ngIf="registerForm.get('email')?.errors?.['email']">Please enter a valid email</span>
+            </div>
+          </div>
+
+          <!-- Password -->
+          <div class="mb-4">
+            <label for="register-password" class="block text-sm font-medium text-gray-700 mb-2">
+              Password
+            </label>
+            <input type="password"
+                   id="register-password"
+                   formControlName="password"
+                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                   placeholder="••••••••"
+                   [class.border-red-500]="registerForm.get('password')?.invalid && registerForm.get('password')?.touched">
+            <div *ngIf="registerForm.get('password')?.invalid && registerForm.get('password')?.touched" 
+                 class="text-red-500 text-sm mt-1">
+              <span *ngIf="registerForm.get('password')?.errors?.['required']">Password is required</span>
+              <span *ngIf="registerForm.get('password')?.errors?.['minlength']">Password must be at least 6 characters</span>
+            </div>
+          </div>
+
+          <!-- Confirm Password -->
+          <div class="mb-4">
+            <label for="register-confirm-password" class="block text-sm font-medium text-gray-700 mb-2">
+              Confirm Password
+            </label>
+            <input type="password"
+                   id="register-confirm-password"
+                   formControlName="confirm_password"
+                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                   placeholder="••••••••"
+                   [class.border-red-500]="registerForm.get('confirm_password')?.invalid && registerForm.get('confirm_password')?.touched">
+            <div *ngIf="registerForm.get('confirm_password')?.invalid && registerForm.get('confirm_password')?.touched" 
+                 class="text-red-500 text-sm mt-1">
+              <span *ngIf="registerForm.get('confirm_password')?.errors?.['required']">Please confirm your password</span>
+              <span *ngIf="registerForm.get('confirm_password')?.errors?.['passwordMismatch']">Passwords do not match</span>
+            </div>
+          </div>
+
+          <!-- Terms Checkbox -->
+          <div class="mb-6">
+            <label class="flex items-start">
+              <input type="checkbox"
+                     formControlName="terms"
+                     class="mt-1 mr-2 h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+              <span class="text-sm text-gray-600">
+                I agree to the Terms and Conditions and Privacy Policy
+              </span>
+            </label>
+            <div *ngIf="registerForm.get('terms')?.invalid && registerForm.get('terms')?.touched" 
+                 class="text-red-500 text-sm mt-1">
+              You must accept the terms and conditions
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit"
+                  [disabled]="isSubmitting"
+                  class="w-full bg-primary-600 text-white py-3 rounded-lg font-medium hover:bg-primary-700 transition disabled:opacity-50 disabled:cursor-not-allowed">
+            <span *ngIf="!isSubmitting">Create Account</span>
+            <span *ngIf="isSubmitting">Creating Account...</span>
+          </button>
+
+          <!-- Switch to Login -->
+          <p class="mt-4 text-center text-sm text-gray-600">
+            Already have an account? 
+            <button type="button" (click)="switchMode('login')" class="text-primary-600 hover:text-primary-700 font-medium">
+              Login
+            </button>
+          </p>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</div>

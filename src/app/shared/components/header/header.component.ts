@@ -4,6 +4,7 @@ import { RouterModule } from '@angular/router';
 import { Observable, Subject, of } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap, tap, catchError } from 'rxjs/operators';
 import { AuthService } from '../../../core/services/auth.service';
+import { AuthModalService } from '../../../core/services/auth-modal.service';
 import { CartService } from '../../../core/services/cart.service';
 import { WishlistService } from '../../../core/services/wishlist.service';
 import { User } from '../../../core/models/user.model';
@@ -39,6 +40,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   constructor(
     private authService: AuthService,
+    private authModalService: AuthModalService,
     private cartService: CartService,
     private wishlistService: WishlistService,
     private productService: ProductService
@@ -190,6 +192,14 @@ export class HeaderComponent implements OnInit, OnDestroy {
   logout(): void {
     this.authService.logout();
     this.userMenuOpen = false;
+  }
+
+  openLoginModal(): void {
+    this.authModalService.open('login');
+  }
+
+  openRegisterModal(): void {
+    this.authModalService.open('register');
   }
 
   toggleMobileMenu(): void {
