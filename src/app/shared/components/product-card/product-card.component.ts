@@ -5,6 +5,8 @@ import { FormsModule } from '@angular/forms';
 import { Product, ProductAttribute } from '../../../core/models/product.model';
 import { CartService } from '../../../core/services/cart.service';
 import { WishlistService } from '../../../core/services/wishlist.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { AuthModalService } from '../../../core/services/auth-modal.service';
 import { ToastrService } from 'ngx-toastr';
 
 @Component({
@@ -31,6 +33,8 @@ export class ProductCardComponent implements OnInit {
   constructor(
     private cartService: CartService,
     private wishlistService: WishlistService,
+    private authService: AuthService,
+    private authModalService: AuthModalService,
     private toastr: ToastrService,
     private ngZone: NgZone
   ) {}
@@ -268,6 +272,15 @@ export class ProductCardComponent implements OnInit {
   toggleWishlist(event: Event): void {
     event.preventDefault();
     event.stopPropagation();
+
+    // Check if user is authenticated
+    const isAuthenticated = this.authService.getCurrentUser() !== null;
+    
+    if (!isAuthenticated) {
+      this.toastr.info('Please login to add items to your wishlist');
+      this.authModalService.open('login');
+      return;
+    }
 
     if (this.isInWishlist()) {
       this.wishlistService.removeFromWishlist(this.product.id).subscribe({

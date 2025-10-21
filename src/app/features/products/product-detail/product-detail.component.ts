@@ -348,6 +348,15 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
   }
 
   toggleWishlist(product: Product): void {
+    // Check if user is authenticated
+    const isAuthenticated = this.authService.getCurrentUser() !== null;
+    
+    if (!isAuthenticated) {
+      this.toastr.info('Please login to add items to your wishlist');
+      this.authModalService.open('login');
+      return;
+    }
+
     if (this.isInWishlist(product.id)) {
       this.wishlistService.removeFromWishlist(product.id).subscribe({
         next: () => {
