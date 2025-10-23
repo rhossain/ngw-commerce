@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { Cart, CartItem } from '../../core/models/cart.model';
@@ -34,7 +34,8 @@ export class CartComponent implements OnInit {
     private toastr: ToastrService,
     private authService: AuthService,
     private savedCartService: SavedCartService,
-    private shippingEstimateService: ShippingEstimateService
+    private shippingEstimateService: ShippingEstimateService,
+    private router: Router
   ) {
     this.cart$ = this.cartService.cart$;
   }
@@ -191,5 +192,21 @@ export class CartComponent implements OnInit {
     this.savedCartService.clearSavedCartForUser(user.id);
     this.savedCartExists = false;
     this.toastr.success('Saved cart cleared');
+  }
+
+  proceedToCheckout(): void {
+    const user = this.authService.getCurrentUser();
+    if (!user) {
+      this.toastr.warning('Please log in to proceed to checkout', 'Login Required');
+      this.router.navigate(['/account/login'], { 
+        queryParams: { returnUrl: '/checkout' } 
+      });
+      return;
+    }
+    this.router.navigate(['/checkout']);
+  }
+
+  get isAuthenticated(): boolean {
+    return !!this.authService.getCurrentUser();
   }
 }

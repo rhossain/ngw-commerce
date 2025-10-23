@@ -221,12 +221,12 @@
             </div>
 
             <!-- Action Buttons -->
-            <a 
-              routerLink="/checkout"
+            <button 
+              (click)="proceedToCheckout()"
               class="block w-full bg-blue-400 text-white text-center py-3 rounded-md hover:bg-blue-500 transition font-semibold"
             >
               Proceed to Checkout
-            </a>
+            </button>
 
             <button
               class="mt-3 w-full border border-gray-300 text-gray-700 text-center py-3 rounded-md hover:bg-gray-50 transition text-sm font-medium"

@@ -30,10 +30,8 @@ export class OrderDetailComponent implements OnInit {
   loadOrderDetails(orderId: number): void {
     this.loading = true;
     this.orderService.getOrderById(orderId).subscribe({
-      next: (response: { success: boolean; order: Order }) => {
-        if (response.success) {
-          this.order = response.order;
-        }
+      next: (order: Order) => {
+        this.order = order;
         this.loading = false;
       },
       error: (error: any) => {

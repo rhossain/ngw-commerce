@@ -1,7 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastrService } from 'ngx-toastr';
 
@@ -12,13 +12,15 @@ import { ToastrService } from 'ngx-toastr';
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css']
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   loginForm: FormGroup;
   isSubmitting = false;
+  returnUrl: string = '/account/profile';
 
   constructor(
     private fb: FormBuilder,
     private router: Router,
+    private route: ActivatedRoute,
     private authService: AuthService,
     private toastr: ToastrService
   ) {
@@ -26,6 +28,11 @@ export class LoginComponent {
       username: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]]
     });
+  }
+
+  ngOnInit(): void {
+    // Get the returnUrl from query params, default to profile page
+    this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/account/profile';
   }
 
   onSubmit(): void {
@@ -40,7 +47,7 @@ export class LoginComponent {
       next: () => {
         this.isSubmitting = false;
         this.toastr.success('Login successful!');
-        this.router.navigate(['/account/profile']);
+        this.router.navigate([this.returnUrl]);
       },
       error: (error) => {
         this.isSubmitting = false;

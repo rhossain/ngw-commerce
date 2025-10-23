@@ -34,7 +34,13 @@ export const routes: Routes = [
   {
     path: ROUTE_PATHS.CHECKOUT,
     loadComponent: () => import('./features/checkout/checkout.component').then(m => m.CheckoutComponent),
+    canActivate: [authGuard],
     title: 'Checkout - WooCommerce Shop'
+  },
+  {
+    path: 'order-confirmation/:id',
+    loadComponent: () => import('./features/order-confirmation/order-confirmation.component').then(m => m.OrderConfirmationComponent),
+    title: 'Order Confirmation - WooCommerce Shop'
   },
   {
     path: ROUTE_PATHS.WISHLIST,

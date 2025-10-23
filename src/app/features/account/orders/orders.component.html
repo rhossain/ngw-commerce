@@ -86,22 +86,22 @@
 
           <!-- Order Details -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 py-4 border-t border-gray-200">
-            <div>
+            <div *ngIf="order.billing">
               <h4 class="text-sm font-medium text-gray-700 mb-2">Billing Address</h4>
               <div class="text-sm text-gray-600">
-                <p>{{order['billing'].first_name}} {{order['billing'].last_name}}</p>
-                <p>{{order['billing'].address_1}}</p>
-                <p *ngIf="order['billing'].address_2">{{order['billing'].address_2}}</p>
-                <p>{{order['billing'].city}}, {{order['billing'].state}} {{order['billing'].postcode}}</p>
+                <p>{{order.billing.first_name}} {{order.billing.last_name}}</p>
+                <p>{{order.billing.address_1}}</p>
+                <p *ngIf="order.billing.address_2">{{order.billing.address_2}}</p>
+                <p>{{order.billing.city}}, {{order.billing.state}} {{order.billing.postcode}}</p>
               </div>
             </div>
-            <div>
+            <div *ngIf="order.shipping">
               <h4 class="text-sm font-medium text-gray-700 mb-2">Shipping Address</h4>
               <div class="text-sm text-gray-600">
-                <p>{{order['shipping'].first_name}} {{order['shipping'].last_name}}</p>
-                <p>{{order['shipping'].address_1}}</p>
-                <p *ngIf="order['shipping'].address_2">{{order['shipping'].address_2}}</p>
-                <p>{{order['shipping'].city}}, {{order['shipping'].state}} {{order['shipping'].postcode}}</p>
+                <p>{{order.shipping.first_name}} {{order.shipping.last_name}}</p>
+                <p>{{order.shipping.address_1}}</p>
+                <p *ngIf="order.shipping.address_2">{{order.shipping.address_2}}</p>
+                <p>{{order.shipping.city}}, {{order.shipping.state}} {{order.shipping.postcode}}</p>
               </div>
             </div>
           </div>
