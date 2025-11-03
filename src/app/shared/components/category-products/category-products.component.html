@@ -1,0 +1,152 @@
+<div class="category-products-container">
+  <!-- Header Section -->
+  <div class="flex items-center justify-between mb-6">
+    <h2 class="text-2xl md:text-3xl font-bold text-gray-900">
+      {{ getDisplayHeading() }}
+    </h2>
+    <a 
+      *ngIf="showViewAll && !loading && products.length > 0"
+      [routerLink]="getViewAllLink()"
+      class="text-primary-600 hover:text-primary-700 font-semibold text-sm md:text-base flex items-center gap-2 transition-colors"
+    >
+      View All
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+      </svg>
+    </a>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="flex justify-center items-center py-12">
+    <app-loading-spinner></app-loading-spinner>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+    <svg class="w-12 h-12 text-red-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    <p class="text-red-800 font-medium">{{ error }}</p>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && !error && products.length === 0" class="bg-gray-50 border border-gray-200 rounded-lg p-12 text-center">
+    <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+    </svg>
+    <p class="text-gray-600 text-lg">No products found in this category</p>
+  </div>
+
+  <!-- Grid View -->
+  <div *ngIf="!loading && !error && products.length > 0 && displayStyle === 'grid'" [ngClass]="getGridClasses()">
+    <app-product-card 
+      *ngFor="let product of products; trackBy: trackByProductId"
+      [product]="product"
+    ></app-product-card>
+  </div>
+
+  <!-- Carousel View -->
+  <div *ngIf="!loading && !error && products.length > 0 && displayStyle === 'carousel'" class="carousel-container">
+    <swiper-container
+      [slidesPerView]="1"
+      [spaceBetween]="carouselSpaceBetween"
+      [loop]="carouselLoop"
+      [navigation]="true"
+      [pagination]="getCarouselPagination()"
+      [autoplay]="getCarouselAutoplay()"
+      [breakpoints]="getCarouselBreakpoints()"
+      class="product-carousel"
+    >
+      <swiper-slide *ngFor="let product of products; trackBy: trackByProductId">
+        <app-product-card [product]="product"></app-product-card>
+      </swiper-slide>
+    </swiper-container>
+  </div>
+
+  <!-- List View -->
+  <div *ngIf="!loading && !error && products.length > 0 && displayStyle === 'list'" [ngClass]="getListClasses()">
+    <div 
+      *ngFor="let product of products; trackBy: trackByProductId"
+      class="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
+      [ngClass]="listCompact ? 'p-4' : 'p-6'"
+    >
+      <div class="flex flex-col sm:flex-row gap-4 sm:gap-6">
+        <!-- Product Image -->
+        <div class="flex-shrink-0">
+          <a [routerLink]="['/products', product.slug]">
+            <img 
+              [src]="product.images && product.images.length > 0 ? product.images[0].src : 'assets/placeholder.png'"
+              [alt]="product.name"
+              [ngClass]="listCompact ? 'w-24 h-24' : 'w-32 h-32 sm:w-40 sm:h-40'"
+              class="object-cover rounded-lg"
+            />
+          </a>
+        </div>
+
+        <!-- Product Details -->
+        <div class="flex-grow">
+          <a [routerLink]="['/products', product.slug]" class="block">
+            <h3 class="font-semibold text-gray-900 hover:text-primary-600 transition-colors"
+                [ngClass]="listCompact ? 'text-base mb-1' : 'text-lg mb-2'">
+              {{ product.name }}
+            </h3>
+          </a>
+
+          <div *ngIf="!listCompact && product.short_description" 
+               class="text-gray-600 text-sm mb-3 line-clamp-2"
+               [innerHTML]="product.short_description">
+          </div>
+
+          <!-- Rating -->
+          <div *ngIf="product.rating_count > 0" class="flex items-center gap-2 mb-2">
+            <div class="flex items-center">
+              <span class="text-yellow-400">★</span>
+              <span class="text-sm text-gray-600 ml-1">{{ product.average_rating }}</span>
+            </div>
+            <span class="text-xs text-gray-500">({{ product.rating_count }} reviews)</span>
+          </div>
+
+          <!-- Price -->
+          <div class="flex items-center gap-2 mb-3">
+            <span class="text-xl font-bold text-gray-900">
+              ${{ product.price }}
+            </span>
+            <span *ngIf="product.on_sale && product.regular_price" 
+                  class="text-sm text-gray-500 line-through">
+              ${{ product.regular_price }}
+            </span>
+            <span *ngIf="product.on_sale" 
+                  class="bg-red-100 text-red-800 text-xs font-semibold px-2 py-1 rounded">
+              SALE
+            </span>
+          </div>
+
+          <!-- Stock Status -->
+          <div class="mb-3">
+            <span *ngIf="product.stock_status === 'instock'" 
+                  class="text-green-600 text-sm font-medium">
+              ✓ In Stock
+            </span>
+            <span *ngIf="product.stock_status === 'outofstock'" 
+                  class="text-red-600 text-sm font-medium">
+              Out of Stock
+            </span>
+            <span *ngIf="product.stock_status === 'onbackorder'" 
+                  class="text-orange-600 text-sm font-medium">
+              Available on backorder
+            </span>
+          </div>
+
+          <!-- Action Button -->
+          <a 
+            [routerLink]="['/products', product.slug]"
+            class="inline-block bg-primary-600 hover:bg-primary-700 text-white font-medium px-6 py-2 rounded-lg transition-colors"
+            [ngClass]="listCompact ? 'text-sm' : 'text-base'"
+          >
+            View Details
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

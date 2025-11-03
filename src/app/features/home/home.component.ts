@@ -8,11 +8,12 @@ import * as ProductActions from '../../store/actions/product.actions';
 import * as ProductSelectors from '../../store/selectors/product.selectors';
 import { Product } from '../../core/models/product.model';
 import { ProductCardComponent } from '../../shared/components/product-card/product-card.component';
+import { CategoryProductsComponent } from "src/app/shared/components/category-products/category-products.component";
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, RouterModule, ProductCardComponent],
+  imports: [CommonModule, RouterModule, ProductCardComponent, CategoryProductsComponent],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.css']
 })
