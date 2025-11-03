@@ -4,106 +4,119 @@ import { RouterModule } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
 import { AppState } from '../../store/app.state';
-import * as ProductActions from '../../store/actions/product.actions';
 import * as ProductSelectors from '../../store/selectors/product.selectors';
-import { Product } from '../../core/models/product.model';
-import { ProductCardComponent } from '../../shared/components/product-card/product-card.component';
-import { CategoryProductsComponent } from "src/app/shared/components/category-products/category-products.component";
+import { Category, BrandShowcase, DailyEssential } from '../../core/models/landing.model';
+import { CategoryProductsComponent } from '../../shared/components/category-products/category-products.component';
+import { HeroBannerComponent } from '../../shared/components/hero-banner/hero-banner.component';
+import { HeroSlide } from '../../shared/components/hero-banner/hero-banner.model';
+import { CategoriesDisplayComponent } from '../../shared/components/categories-display/categories-display.component';
+import { CategoryDisplay } from '../../shared/components/categories-display/categories-display.model';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, RouterModule, ProductCardComponent, CategoryProductsComponent],
+  imports: [CommonModule, RouterModule, CategoryProductsComponent, HeroBannerComponent, CategoriesDisplayComponent],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.css']
 })
 export class HomeComponent implements OnInit {
-  featuredProducts$: Observable<Product[]>;
   loading$: Observable<boolean>;
 
-  heroSlides = [
+  // Hero Slides for Hero Banner Component
+  heroSlides: HeroSlide[] = [
     {
-      title: 'Summer Collection',
-      subtitle: 'Discover the latest trends for the season',
-      image: 'https://placeholder-image-service.onrender.com/image/1200x500?prompt=Summer fashion collection hero banner with bright colors and stylish clothing&id=hero-001&customer_id=cus_TA1YAkwFiIX1gw',
-      cta: 'Shop Now',
-      link: '/products?category=summer'
+      id: 'slide-1',
+      title: 'SMART WEARABLE.',
+      subtitle: 'Best Deal Online on smart watches',
+      description: 'UP to 80% OFF',
+      active: true
     },
     {
-      title: 'Electronics Sale',
-      subtitle: 'Up to 50% off on selected items',
-      image: 'https://placeholder-image-service.onrender.com/image/1200x500?prompt=Electronics sale banner with modern gadgets and devices on dark background&id=hero-002&customer_id=cus_TA1YAkwFiIX1gw',
-      cta: 'Shop Electronics',
-      link: '/products?category=electronics'
+      id: 'slide-2',
+      title: 'PREMIUM SMARTPHONES',
+      subtitle: 'Latest technology at your fingertips',
+      description: 'UP to 60% OFF',
+      active: false
     },
     {
-      title: 'Home & Garden',
+      id: 'slide-3',
+      title: 'HOME ELECTRONICS',
       subtitle: 'Transform your living space',
-      image: 'https://placeholder-image-service.onrender.com/image/1200x500?prompt=Home and garden banner with beautiful indoor plants and modern furniture&id=hero-003&customer_id=cus_TA1YAkwFiIX1gw',
-      cta: 'Explore',
-      link: '/products?category=home-garden'
+      description: 'UP to 70% OFF',
+      active: false
     }
   ];
 
-  currentSlide = 0;
+  // Top Categories
+  topCategories: CategoryDisplay[] = [
+    { id: 1, name: 'Mobile', slug: 'mobile', icon: 'fa-mobile-alt' },
+    { id: 2, name: 'Cosmetics', slug: 'cosmetics', icon: 'fa-pump-soap' },
+    { id: 3, name: 'Electronics', slug: 'electronics', icon: 'fa-tv' },
+    { id: 4, name: 'Furniture', slug: 'furniture', icon: 'fa-couch' },
+    { id: 5, name: 'Watches', slug: 'watches', icon: 'fa-clock' },
+    { id: 6, name: 'Decor', slug: 'decor', icon: 'fa-leaf' },
+    { id: 7, name: 'Accessories', slug: 'accessories', icon: 'fa-gem' }
+  ];
 
-  categories = [
+  // Electronics Brands
+  electronicsBrands: BrandShowcase[] = [
     {
-      name: 'Electronics',
-      image: 'https://placeholder-image-service.onrender.com/image/300x200?prompt=Electronics category showcase with modern gadgets and devices&id=cat-001&customer_id=cus_TA1YAkwFiIX1gw',
-      link: '/products?category=electronics'
+      id: 'iphone',
+      name: 'iPhone',
+      backgroundColor: 'from-gray-800 to-gray-900',
+      textColor: 'text-white',
+      discount: 'UP to 80% OFF'
     },
     {
-      name: 'Fashion',
-      image: 'https://placeholder-image-service.onrender.com/image/300x200?prompt=Fashion category with trendy clothing and accessories display&id=cat-002&customer_id=cus_TA1YAkwFiIX1gw',
-      link: '/products?category=fashion'
+      id: 'realme',
+      name: 'realme',
+      backgroundColor: 'bg-yellow-100',
+      textColor: 'text-gray-900',
+      discount: 'UP to 80% OFF'
     },
     {
-      name: 'Home & Garden',
-      image: 'https://placeholder-image-service.onrender.com/image/300x200?prompt=Home and garden category with furniture and plants&id=cat-003&customer_id=cus_TA1YAkwFiIX1gw',
-      link: '/products?category=home-garden'
+      id: 'xiaomi',
+      name: 'Xiaomi',
+      backgroundColor: 'bg-orange-50',
+      textColor: 'text-gray-900',
+      discount: 'UP to 80% OFF'
     },
     {
-      name: 'Sports',
-      image: 'https://placeholder-image-service.onrender.com/image/300x200?prompt=Sports category with athletic equipment and gear&id=cat-004&customer_id=cus_TA1YAkwFiIX1gw',
-      link: '/products?category=sports'
+      id: 'samsung',
+      name: 'Samsung',
+      backgroundColor: 'from-blue-400 to-blue-600',
+      textColor: 'text-white',
+      discount: 'UP to 80% OFF'
     }
+  ];
+
+  // Daily Essentials
+  dailyEssentials: DailyEssential[] = [
+    { id: '1', name: 'Daily Essentials', icon: 'fa-shopping-basket', discount: 'UP to 50% OFF', category: 'essentials' },
+    { id: '2', name: 'Vegetables', icon: 'fa-carrot', discount: 'UP to 50% OFF', category: 'vegetables' },
+    { id: '3', name: 'Fruits', icon: 'fa-apple-alt', discount: 'UP to 50% OFF', category: 'fruits' },
+    { id: '4', name: 'Strawberry', icon: 'fa-seedling', discount: 'UP to 50% OFF', category: 'strawberry' },
+    { id: '5', name: 'Mango', icon: 'fa-lemon', discount: 'UP to 50% OFF', category: 'mango' },
+    { id: '6', name: 'Cherry', icon: 'fa-circle', discount: 'UP to 50% OFF', category: 'cherry' }
   ];
 
   constructor(private store: Store<AppState>) {
-    this.featuredProducts$ = this.store.select(ProductSelectors.selectAllProducts);
     this.loading$ = this.store.select(ProductSelectors.selectProductsLoading);
   }
 
   ngOnInit(): void {
-    this.loadFeaturedProducts();
-    this.startSlideShow();
+    // Component initialization
   }
 
-  loadFeaturedProducts(): void {
-    this.store.dispatch(ProductActions.loadProducts({
-      params: {
-        per_page: 8,
-        orderby: 'popularity'
-      }
-    }));
+  getCategoryLink(slug: string): string {
+    return `/products?category=${slug}`;
   }
 
-  startSlideShow(): void {
-    setInterval(() => {
-      this.currentSlide = (this.currentSlide + 1) % this.heroSlides.length;
-    }, 5000);
+  getBrandLink(brandSlug: string): string {
+    return `/products?brand=${brandSlug}`;
   }
 
-  goToSlide(index: number): void {
-    this.currentSlide = index;
-  }
-
-  nextSlide(): void {
-    this.currentSlide = (this.currentSlide + 1) % this.heroSlides.length;
-  }
-
-  prevSlide(): void {
-    this.currentSlide = this.currentSlide === 0 ? this.heroSlides.length - 1 : this.currentSlide - 1;
+  getProductLink(slug: string): string {
+    return `/products/${slug}`;
   }
 }

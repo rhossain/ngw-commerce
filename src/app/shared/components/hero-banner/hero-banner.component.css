@@ -1,0 +1,68 @@
+/* Hero Gradient Background */
+.hero-gradient {
+  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #1e40af 100%);
+}
+
+/* Smooth transitions for hero slides */
+.transition-opacity {
+  transition: opacity 1s ease-in-out;
+}
+
+/* Navigation button hover effects */
+button {
+  transition: all 0.3s ease;
+}
+
+button:hover {
+  transform: scale(1.05);
+}
+
+/* Navigation dots animation */
+span[aria-label] {
+  transition: all 0.3s ease;
+}
+
+span[aria-label]:hover {
+  transform: scale(1.2);
+}
+
+/* Responsive font sizing */
+@media (max-width: 640px) {
+  .hero-gradient h2 {
+    font-size: 2rem;
+  }
+  
+  .hero-gradient p {
+    font-size: 1rem;
+  }
+}
+
+/* Image overlay for better text visibility */
+img + .relative::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to right, rgba(0,0,0,0.6), rgba(0,0,0,0.3));
+}
+
+/* Backdrop blur for decorative elements */
+.backdrop-blur-sm {
+  backdrop-filter: blur(8px);
+}
+
+/* Smooth height transitions */
+.hero-gradient {
+  transition: height 0.3s ease;
+}
+
+/* Focus styles for accessibility */
+button:focus,
+span[aria-label]:focus {
+  outline: 2px solid #06b6d4;
+  outline-offset: 2px;
+}
+
+/* Pause animation on hover */
+.hero-gradient:hover {
+  animation-play-state: paused;
+}

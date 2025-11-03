@@ -1,0 +1,143 @@
+/* Hero Gradient Background */
+.hero-gradient {
+  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #1e40af 100%);
+}
+
+/* Category Circle Hover Effect */
+.category-circle {
+  transition: all 0.3s ease;
+}
+
+.category-circle:hover {
+  transform: translateY(-5px);
+}
+
+/* Product Card Hover Effect */
+.product-card {
+  transition: all 0.3s ease;
+}
+
+.product-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+}
+
+/* Smooth transitions for hero slides */
+.transition-opacity {
+  transition: opacity 1s ease-in-out;
+}
+
+/* Navigation button styles */
+.nav-button {
+  transition: all 0.2s ease;
+}
+
+.nav-button:hover {
+  background-color: #3b82f6;
+  color: white;
+}
+
+/* Custom scrollbar hide for horizontal scroll areas */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Smooth scroll behavior */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Animation for loading spinner */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Pulse animation for skeleton loaders */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Featured product border animation */
+@keyframes borderPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(6, 182, 212, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(6, 182, 212, 0);
+  }
+}
+
+.product-card.border-2.border-cyan-500 {
+  animation: borderPulse 2s ease-in-out infinite;
+}
+
+/* Smooth scale animation for images */
+img {
+  transition: transform 0.3s ease-in-out;
+}
+
+.product-card:hover img {
+  transform: scale(1.05);
+}
+
+/* Backdrop blur for loading overlay */
+.backdrop-blur-sm {
+  backdrop-filter: blur(8px);
+}
+
+/* Custom focus styles for accessibility */
+button:focus,
+a:focus {
+  outline: 2px solid #06b6d4;
+  outline-offset: 2px;
+}
+
+/* Responsive font sizing */
+@media (max-width: 640px) {
+  .hero-gradient h2 {
+    font-size: 2rem;
+  }
+  
+  .hero-gradient p {
+    font-size: 1rem;
+  }
+}
+
+/* Grid layout improvements */
+.grid {
+  display: grid;
+  gap: 1.25rem;
+}
+
+/* Ensure smooth transitions on all interactive elements */
+* {
+  transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
+  transition-duration: 150ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Override for specific elements that shouldn't transition */
+.no-transition,
+.no-transition * {
+  transition: none !important;
+}

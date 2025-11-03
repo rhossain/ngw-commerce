@@ -1,0 +1,73 @@
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="relative hero-gradient rounded-3xl overflow-hidden shadow-xl" [ngClass]="getHeightClass()">
+    <!-- Slides -->
+    <div *ngFor="let slide of slides; let i = index"
+         [class.opacity-100]="currentSlide === i"
+         [class.opacity-0]="currentSlide !== i"
+         class="absolute inset-0 transition-opacity duration-1000 ease-in-out">
+      
+      <!-- Background Image (if provided) -->
+      <img *ngIf="slide.imageUrl" 
+           [src]="slide.imageUrl" 
+           [alt]="slide.title"
+           class="absolute inset-0 w-full h-full object-cover">
+      
+      <!-- Content Overlay -->
+      <div class="relative h-full flex items-center justify-between px-8 md:px-16 py-12 md:py-16">
+        <div class="text-white max-w-lg z-10">
+          <p class="text-sm md:text-base mb-2 font-light">{{ slide.subtitle }}</p>
+          <h2 class="text-4xl md:text-6xl font-bold mb-4 leading-tight">{{ slide.title }}</h2>
+          <p class="text-2xl md:text-3xl font-semibold mb-6">{{ slide.description }}</p>
+          
+          <!-- CTA Button (if provided) -->
+          <a *ngIf="slide.ctaText && slide.ctaLink"
+             [routerLink]="[slide.ctaLink]"
+             class="inline-block bg-white text-gray-900 px-8 py-3 rounded-lg hover:bg-gray-100 transition font-semibold shadow-lg">
+            {{ slide.ctaText }}
+          </a>
+        </div>
+        
+        <!-- Decorative Element (only shows when no background image) -->
+        <div *ngIf="!slide.imageUrl" class="hidden md:block absolute right-12 top-1/2 transform -translate-y-1/2">
+          <div class="relative">
+            <div class="w-56 h-56 bg-gradient-to-br from-blue-400/20 to-purple-600/20 rounded-full blur-3xl absolute -top-10 -right-10"></div>
+            <div class="relative bg-gray-600/30 backdrop-blur-sm rounded-3xl p-4 w-52 h-64 flex items-center justify-center">
+              <div class="bg-blue-900/50 rounded-2xl w-40 h-52 flex items-center justify-center">
+                <div class="bg-gradient-to-br from-cyan-400 to-blue-500 rounded-xl w-32 h-44 flex items-center justify-center text-white text-xs">
+                  <i class="fas fa-clock text-6xl"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Navigation Dots -->
+    <div *ngIf="showNavigationDots && slides.length > 1" 
+         class="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex gap-2 z-20">
+      <span *ngFor="let slide of slides; let i = index"
+            (click)="goToSlide(i)"
+            [class.w-8]="currentSlide === i"
+            [class.w-2]="currentSlide !== i"
+            [class.bg-white]="currentSlide === i"
+            [class.bg-white/40]="currentSlide !== i"
+            class="h-1.5 rounded-full cursor-pointer transition-all duration-300"
+            [attr.aria-label]="'Go to slide ' + (i + 1)"></span>
+    </div>
+    
+    <!-- Navigation Arrows -->
+    <ng-container *ngIf="showNavigationArrows && slides.length > 1">
+      <button (click)="prevSlide()" 
+              class="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-3 shadow-lg hover:shadow-xl transition z-20"
+              aria-label="Previous slide">
+        <i class="fas fa-chevron-left text-gray-800"></i>
+      </button>
+      <button (click)="nextSlide()" 
+              class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-3 shadow-lg hover:shadow-xl transition z-20"
+              aria-label="Next slide">
+        <i class="fas fa-chevron-right text-gray-800"></i>
+      </button>
+    </ng-container>
+  </div>
+</section>
