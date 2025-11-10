@@ -66,3 +66,105 @@ span[aria-label]:focus {
 .hero-gradient:hover {
   animation-play-state: paused;
 }
+
+/* Two-line clamp with ellipsis for long hero titles */
+.hero-title-clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* limit to two lines */
+  line-clamp: 2; /* spec property (may require prefix) */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-height: 3.2em; /* approximate for two lines given font size/line-height */
+  /* Fallback for non-webkit browsers */
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+@supports not (-webkit-line-clamp: 2) {
+  .hero-title-clamp {
+    /* Progressive enhancement fallback: after 2 lines hide overflow */
+    position: relative;
+  }
+  .hero-title-clamp:after {
+    content: '…';
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    padding-left: 8px;
+    background: linear-gradient(to right, rgba(30,58,138,0), rgba(30,58,138,0.85));
+  }
+}
+
+/* Clamp subtitle (always 2 lines) */
+.hero-subtitle-clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-height: 2.4em; /* ~2 lines */
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+/* Clamp description: mobile 2 lines, desktop 3 lines */
+.hero-description-clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 3; /* desktop default */
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.15;
+  word-break: break-word;
+}
+
+/* Discount badge styling */
+.discount-badge {
+  background: linear-gradient(135deg, #dc2626, #ef4444 55%, #f87171);
+  color: #fff;
+  padding: 5px 14px;
+  border-radius: 9999px;
+  font-size: 0.70rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.30);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.discount-badge:after {
+  content: ''; /* subtle shine */
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(120deg, rgba(255,255,255,0.35), rgba(255,255,255,0) 50%);
+  mix-blend-mode: overlay;
+  pointer-events: none;
+}
+
+@media (max-width: 640px) {
+  .discount-badge { font-size: 0.60rem; padding: 4px 10px; }
+}
+
+@media (max-width: 640px) {
+  .hero-description-clamp {
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+  }
+}
+
+@supports not (-webkit-line-clamp: 2) {
+  .hero-subtitle-clamp, .hero-description-clamp { position: relative; }
+  .hero-subtitle-clamp:after, .hero-description-clamp:after {
+    content: '…';
+    position: absolute;
+    bottom: 0; right: 0;
+    padding-left: 6px;
+    background: linear-gradient(to right, rgba(30,58,138,0), rgba(30,58,138,0.85));
+  }
+}

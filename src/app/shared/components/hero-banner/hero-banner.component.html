@@ -1,5 +1,10 @@
 <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
   <div class="relative hero-gradient rounded-3xl overflow-hidden shadow-xl" [ngClass]="getHeightClass()">
+
+    @for (item of slides; track $index) {
+        {{item.price}}
+    }
+
     <!-- Slides -->
     <div *ngFor="let slide of slides; let i = index"
          [class.opacity-100]="currentSlide === i"
@@ -15,16 +20,39 @@
       <!-- Content Overlay -->
       <div class="relative h-full flex items-center justify-between px-8 md:px-16 py-12 md:py-16">
         <div class="text-white max-w-lg z-10">
-          <p class="text-sm md:text-base mb-2 font-light">{{ slide.subtitle }}</p>
-          <h2 class="text-4xl md:text-6xl font-bold mb-4 leading-tight">{{ slide.title }}</h2>
-          <p class="text-2xl md:text-3xl font-semibold mb-6">{{ slide.description }}</p>
+          <p class="text-sm md:text-base mb-2 font-light hero-subtitle-clamp" [attr.title]="slide.subtitle" *ngIf="slide.subtitle">{{ slide.subtitle }}</p>
+          <h2 class="text-4xl md:text-6xl font-bold mb-4 leading-tight hero-title-clamp" [attr.title]="slide.title">{{ slide.title }}</h2>
+          <!-- <p class="text-2xl md:text-3xl font-semibold mb-4 hero-description-clamp" [attr.title]="slide.description" *ngIf="slide.description">{{ slide.description }}</p> -->
+          <!-- Price & Discount -->
+          <div *ngIf="slide.price !== null && slide.price !== undefined" class="mb-6 flex items-center gap-4" aria-label="Product pricing">
+            <div class="flex flex-col">
+              <div class="flex items-baseline gap-3">
+                <span class="text-3xl md:text-4xl font-extrabold tracking-tight" [attr.aria-label]="'Current price ' + slide.price">
+                  <ng-container *ngIf="slide.currencySymbol; else codeCurrency">{{ slide.currencySymbol }}{{ slide.price | number:'1.2-2' }}</ng-container>
+                  <ng-template #codeCurrency>{{ slide.price | currency:(slide.currency || 'USD'):'symbol':'1.2-2' }}</ng-template>
+                </span>
+                <span *ngIf="slide.hasDiscount && slide.regularPrice" class="text-lg line-through opacity-70" [attr.aria-label]="'Regular price ' + slide.regularPrice">
+                  <ng-container *ngIf="slide.currencySymbol; else codeRegular">{{ slide.currencySymbol }}{{ slide.regularPrice | number:'1.2-2' }}</ng-container>
+                  <ng-template #codeRegular>{{ slide.regularPrice | currency:(slide.currency || 'USD'):'symbol':'1.2-2' }}</ng-template>
+                </span>
+              </div>
+              <span *ngIf="slide.hasDiscount && slide.discountPercent" class="discount-badge self-start mt-2" [attr.aria-label]="slide.discountPercent + ' percent off'">
+                {{ slide.discountPercent }}% OFF · Save 
+                <ng-container *ngIf="slide.discountAmount">
+                  <ng-container *ngIf="slide.currencySymbol; else codeSave">{{ slide.currencySymbol }}{{ slide.discountAmount | number:'1.2-2' }}</ng-container>
+                  <ng-template #codeSave>{{ slide.discountAmount | currency:(slide.currency || 'USD'):'symbol':'1.2-2' }}</ng-template>
+                </ng-container>
+              </span>
+            </div>
+          </div>
           
           <!-- CTA Button (if provided) -->
-          <a *ngIf="slide.ctaText && slide.ctaLink"
-             [routerLink]="[slide.ctaLink]"
-             class="inline-block bg-white text-gray-900 px-8 py-3 rounded-lg hover:bg-gray-100 transition font-semibold shadow-lg">
-            {{ slide.ctaText }}
-          </a>
+          <!-- CTA Button (internal vs external) -->
+          <ng-container *ngIf="slide.ctaText && slide.ctaLink">
+            <a [routerLink]="slide.ctaLink"
+               class="inline-block bg-white text-gray-900 px-8 py-3 rounded-lg hover:bg-gray-100 transition font-semibold shadow-lg"
+               >{{ slide.ctaText }}</a>
+          </ng-container>
         </div>
         
         <!-- Decorative Element (only shows when no background image) -->

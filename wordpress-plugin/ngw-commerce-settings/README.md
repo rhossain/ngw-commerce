@@ -47,17 +47,97 @@ Response shape (example):
   },
   "updated_at": "2025-11-03 10:11:12",
   "version": "0.1.0",
-  "hero_slider_details": [{"id":12,"title":"Hat"}],
+  "schema_version": 4,
+  "hero_slider_details": [
+    {
+      "id": 12,
+      "title": "Hat",
+      "thumbUrl": "https://example.com/wp-content/uploads/hat.jpg",
+      "link": "https://example.com/product/hat/",
+      "price": 18.00,
+      "regularPrice": 24.00,
+      "salePrice": 18.00,
+      "discountPercent": 25,
+      "hasDiscount": true,
+      "discountAmount": 6.00,
+      "currency": "USD",
+      "currencySymbol": "$"
+    }
+  ],
   "featured_category_details": [{"id":5,"name":"Men","slug":"men"}],
   "highlighted_category_details": [
     {
       "category": {"id":5,"name":"Men","slug":"men"},
-      "products": [{"id":12,"title":"Hat"}]
+      "products": [
+        {
+          "id": 12,
+          "title": "Hat",
+          "thumbUrl": "https://example.com/wp-content/uploads/hat.jpg",
+          "price": 18.00,
+          "regularPrice": 24.00,
+          "salePrice": 18.00,
+          "discountPercent": 25,
+          "hasDiscount": true,
+          "discountAmount": 6.00,
+          "currency": "USD",
+          "currencySymbol": "$"
+        }
+      ]
     }
   ],
   "cache_version": 7
 }
 ```
+
+### Hero Slider Pricing Fields
+
+Each object in `hero_slider_details` (and nested highlighted category product arrays) can include the following pricing metadata (schema_version >= 4):
+
+Field | Description
+----- | -----------
+`price` | Effective price (sale price if active; falls back to regular price)
+`regularPrice` | Original non-sale list price
+`salePrice` | Sale price when discounted (may equal regularPrice if no discount)
+`hasDiscount` | Boolean convenience flag indicating a true discount is active
+`discountPercent` | Integer percent off (rounded) when discounted
+`discountAmount` | Absolute savings amount (`regularPrice - salePrice`)
+`currency` | Store currency code (e.g. `USD`, `EUR`)
+`currencySymbol` | Symbol derived from WooCommerce (`$`, `€`, etc.)
+`thumbUrl` | Large thumbnail URL (placeholder provided if missing)
+
+#### Angular Integration Notes
+
+Recommended hero banner mapping logic:
+
+1. Use `price` for display; show struck-through `regularPrice` when `hasDiscount`.
+2. When `hasDiscount` is true, surface both `discountPercent` and `discountAmount` (formatted with symbol if available).
+3. Fall back to Angular CurrencyPipe if `currencySymbol` not provided.
+4. Treat zero values (`0`) as valid prices; use explicit null/undefined checks in templates.
+5. Re-fetch settings when `schema_version` changes (ETag already incorporates it).
+
+Edge Cases:
+* If `salePrice` equals `regularPrice`, the backend sets `hasDiscount` false and omits `discountPercent`.
+* Variable products still reported via Woo getters—ensure each selected product has a visible price in WooCommerce.
+* If prices are entirely absent, fields may be `null`; hide pricing UI gracefully.
+
+#### Example Angular Template Snippet
+
+```html
+<div *ngIf="slide.price !== null && slide.price !== undefined">
+  <span>{{ slide.currencySymbol ? (slide.currencySymbol + (slide.price | number:'1.2-2')) : (slide.price | currency:slide.currency:'symbol':'1.2-2') }}</span>
+  <span *ngIf="slide.hasDiscount && slide.regularPrice" class="line-through">
+    {{ slide.currencySymbol ? (slide.currencySymbol + (slide.regularPrice | number:'1.2-2')) : (slide.regularPrice | currency:slide.currency:'symbol':'1.2-2') }}
+  </span>
+  <span *ngIf="slide.hasDiscount" class="badge">{{ slide.discountPercent }}% · Save {{ slide.currencySymbol ? (slide.currencySymbol + (slide.discountAmount | number:'1.2-2')) : (slide.discountAmount | currency:slide.currency:'symbol':'1.2-2') }}</span>
+</div>
+```
+
+### Triggering Data Refresh
+
+To force clients to pick up pricing changes:
+1. Edit and save settings in the admin page (updates `updated_at`).
+2. (Optional) Click "Flush Cache" if underlying product pricing changed outside settings edits.
+3. Angular client will receive a new `ETag`; stale clients should re-request the body.
 
 Update endpoint (requires `manage_options` capability):
 

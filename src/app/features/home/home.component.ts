@@ -9,6 +9,9 @@ import { Category, BrandShowcase, DailyEssential } from '../../core/models/landi
 import { CategoryProductsComponent } from '../../shared/components/category-products/category-products.component';
 import { HeroBannerComponent } from '../../shared/components/hero-banner/hero-banner.component';
 import { HeroSlide } from '../../shared/components/hero-banner/hero-banner.model';
+import { CommerceSettingsService, HeroBannerSlide } from '../../core/services/commerce-settings.service';
+import { HttpClient } from '@angular/common/http';
+import { finalize } from 'rxjs/operators';
 import { CategoriesDisplayComponent } from '../../shared/components/categories-display/categories-display.component';
 import { CategoryDisplay } from '../../shared/components/categories-display/categories-display.model';
 
@@ -22,30 +25,10 @@ import { CategoryDisplay } from '../../shared/components/categories-display/cate
 export class HomeComponent implements OnInit {
   loading$: Observable<boolean>;
 
-  // Hero Slides for Hero Banner Component
-  heroSlides: HeroSlide[] = [
-    {
-      id: 'slide-1',
-      title: 'SMART WEARABLE.',
-      subtitle: 'Best Deal Online on smart watches',
-      description: 'UP to 80% OFF',
-      active: true
-    },
-    {
-      id: 'slide-2',
-      title: 'PREMIUM SMARTPHONES',
-      subtitle: 'Latest technology at your fingertips',
-      description: 'UP to 60% OFF',
-      active: false
-    },
-    {
-      id: 'slide-3',
-      title: 'HOME ELECTRONICS',
-      subtitle: 'Transform your living space',
-      description: 'UP to 70% OFF',
-      active: false
-    }
-  ];
+  // Dynamic hero slides from plugin settings
+  heroSlides: HeroSlide[] = [];
+  heroLoading = true;
+  heroError: string | null = null;
 
   // Top Categories
   topCategories: CategoryDisplay[] = [
@@ -100,12 +83,36 @@ export class HomeComponent implements OnInit {
     { id: '6', name: 'Cherry', icon: 'fa-circle', discount: 'UP to 50% OFF', category: 'cherry' }
   ];
 
-  constructor(private store: Store<AppState>) {
+  constructor(private store: Store<AppState>, private settingsService: CommerceSettingsService) {
     this.loading$ = this.store.select(ProductSelectors.selectProductsLoading);
   }
 
   ngOnInit(): void {
-    // Component initialization
+    this.loadHeroSlides();
+  }
+  private loadHeroSlides(): void {
+    this.heroLoading = true;
+    this.heroError = null;
+    this.settingsService.fetchSettings()
+      .pipe(finalize(() => this.heroLoading = false))
+      .subscribe({
+        next: settings => {
+          this.heroSlides = this.settingsService.mapHeroSlides(settings) as HeroBannerSlide[];
+          if (!this.heroSlides.length) {
+            // Fallback sample slides if no configuration available
+            this.heroSlides = [
+              { id: 'fallback-1', title: 'Welcome to MegaMart', description: 'Configure hero slides in admin.', active: true },
+              { id: 'fallback-2', title: 'Add Products', description: 'Select hero products in WP Admin.', active: false }
+            ];
+          }
+        },
+        error: err => {
+          console.error('[HomeComponent] Hero settings fetch failed', err);
+          this.heroError = 'Failed loading hero content.';
+          // Provide minimal fallback
+          this.heroSlides = [ { id: 'error', title: 'Hero Unavailable', description: 'Retry later', active: true } ];
+        }
+      });
   }
 
   getCategoryLink(slug: string): string {

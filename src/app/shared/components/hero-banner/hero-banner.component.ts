@@ -75,4 +75,6 @@ export class HeroBannerComponent implements OnInit, OnDestroy {
     };
     return heights[this.height] || heights.lg;
   }
+
+  // External link logic no longer needed; internal mapping performed in service.
 }

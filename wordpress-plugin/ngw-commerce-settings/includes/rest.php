@@ -108,13 +108,15 @@ class NGWCS_Rest {
     public function get_settings( WP_REST_Request $request ) {
         $settings = ngwcs_get_settings();
         // Optionally enrich with product/category meta (titles) maintaining order.
-        $ordered_ids = ! empty( $settings['hero_slider_order'] ) ? $settings['hero_slider_order'] : $settings['hero_slider_products'];
-        $settings['hero_slider_details'] = $this->augment_products( $ordered_ids );
+    $ordered_ids = ! empty( $settings['hero_slider_order'] ) ? $settings['hero_slider_order'] : $settings['hero_slider_products'];
+    $settings['hero_slider_details'] = $this->augment_products( $ordered_ids );
+    // Increment schema version when we add/change fields so ETag busts and clients refetch body.
+    $settings['schema_version'] = 5; // v5 adds product slug for internal routing
         $settings['featured_category_details'] = $this->augment_categories( $settings['featured_categories'] );
         $settings['highlighted_category_details'] = $this->augment_map( $settings['highlighted_category_map'] );
         $settings['cache_version'] = intval( get_option( NGWCS_CACHE_VERSION_OPTION, 1 ) );
         // Generate ETag from cache version + updated_at for efficient Angular client caching.
-        $etag = md5( $settings['cache_version'] . '|' . $settings['updated_at'] );
+    $etag = md5( $settings['cache_version'] . '|' . $settings['updated_at'] . '|' . $settings['schema_version'] );
         $if_none_match = $request->get_header( 'if-none-match' );
         if ( $if_none_match && trim( $if_none_match, '"' ) === $etag ) {
             $response = new WP_REST_Response( null, 304 );
@@ -162,14 +164,64 @@ class NGWCS_Rest {
 
     private function augment_products( $ids ) {
         $out = array();
+        $currency = function_exists( 'get_woocommerce_currency' ) ? get_woocommerce_currency() : get_option( 'woocommerce_currency', 'USD' );
         foreach ( (array) $ids as $id ) {
             $id = absint( $id );
             $post = get_post( $id );
             if ( $post && $post->post_type === 'product' ) {
-                $out[] = array(
-                    'id'    => $id,
-                    'title' => get_the_title( $id ),
-                    'link'  => get_permalink( $id ),
+                $product = function_exists( 'wc_get_product' ) ? wc_get_product( $id ) : null;
+                $regular_num  = null;
+                $sale_num     = null;
+                $price_num    = null;
+                if ( $product ) {
+                    // These return string prices; cast to float or null
+                    $regular_raw = $product->get_regular_price();
+                    $sale_raw    = $product->get_sale_price();
+                    $price_raw   = $product->get_price(); // effective (sale if applicable)
+                    $regular_num = $regular_raw !== '' ? (float) $regular_raw : null;
+                    $sale_num    = $sale_raw !== '' ? (float) $sale_raw : null;
+                    $price_num   = $price_raw !== '' ? (float) $price_raw : null;
+                } else {
+                    // Fallback to meta if product API unavailable
+                    $price        = get_post_meta( $id, '_price', true );
+                    $regular      = get_post_meta( $id, '_regular_price', true );
+                    $sale         = get_post_meta( $id, '_sale_price', true );
+                    $price_num    = $price !== '' ? (float) $price : null;
+                    $regular_num  = $regular !== '' ? (float) $regular : null;
+                    $sale_num     = $sale !== '' ? (float) $sale : null;
+                }
+                $discount_pct = null;
+                if ( $regular_num && $sale_num && $sale_num < $regular_num && $regular_num > 0 ) {
+                    $discount_pct = (int) round( ( ( $regular_num - $sale_num ) / $regular_num ) * 100 );
+                }
+                $thumb_url = get_the_post_thumbnail_url( $id, 'large' );
+                if ( ! $thumb_url && function_exists( 'wc_placeholder_img_src' ) ) {
+                    $thumb_url = wc_placeholder_img_src();
+                }
+                $currency_symbol_raw = function_exists( 'get_woocommerce_currency_symbol' ) ? get_woocommerce_currency_symbol( $currency ) : $currency;
+                // WooCommerce may return HTML entities (&nbsp; etc.). Decode & strip whitespace entities.
+                $currency_symbol = html_entity_decode( wp_strip_all_tags( $currency_symbol_raw ), ENT_QUOTES, 'UTF-8' );
+                $currency_symbol = str_replace( array( '\u{00A0}', '\xA0', "\u00A0", "\xC2\xA0", "\xA0", "\u\00A0", "\u00a0", "\u{a0}", '\u{A0}', '&nbsp;' ), ' ', $currency_symbol );
+                $currency_symbol = trim( $currency_symbol );
+                $has_discount    = ( $discount_pct !== null && $discount_pct > 0 );
+                $discount_amount = null;
+                if ( $has_discount && $regular_num && $sale_num ) {
+                    $discount_amount = (float) ( $regular_num - $sale_num );
+                }
+                $out[]     = array(
+                    'id'              => $id,
+                    'title'           => get_the_title( $id ),
+                    'slug'            => $post->post_name,
+                    'link'            => get_permalink( $id ),
+                    'thumbUrl'        => $thumb_url ? $thumb_url : '',
+                    'price'           => $price_num,
+                    'regularPrice'    => $regular_num,
+                    'salePrice'       => $sale_num,
+                    'discountPercent' => $discount_pct,
+                    'hasDiscount'     => $has_discount,
+                    'discountAmount'  => $discount_amount,
+                    'currency'        => $currency,
+                    'currencySymbol'  => $currency_symbol,
                 );
             }
         }
