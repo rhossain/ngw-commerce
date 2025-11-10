@@ -1,16 +1,16 @@
 # Deployment Automation Guide
 
-This project includes a branch-aware deployment script that builds the Angular app and (optionally) uploads the compiled assets to Hostinger via SFTP.
+This project supports two deployment flows:
+
+1. Manual branch-switch deployment via `scripts/deploy-release.sh` (recommended)
+2. Automatic webhook-triggered deploy on pushes to `release` (GitHub Action)
 
 ## Branch Behavior
 
-| Branch      | Default Strategy | Action |
-|-------------|------------------|--------|
-| release     | full             | Production build + clean remote (except `.htaccess`) + upload |
-| development | incremental      | Production build + upload changed/new files (existing remote kept) |
-| other       | incremental      | Same as development |
-
-You can override the strategy with the `DEPLOY_STRATEGY` env variable (`full` or `incremental`).
+| Branch (manual flow) | Behavior |
+|----------------------|----------|
+| development (run script here) | Builds, switches to `release`, commits build artifacts, returns to `development` |
+| release (result) | Contains ONLY compiled build, `.htaccess`, and `deployment-info.json` |
 
 ## One Command
 
@@ -18,65 +18,54 @@ You can override the strategy with the `DEPLOY_STRATEGY` env variable (`full` or
 npm run deploy
 ```
 
-## Environment Variables
+## Manual Deployment Script
 
-Create a `.env` file (never commit real secrets) based on `.env.example`:
+Run from the `development` branch:
 
-```
-HOSTINGER_HOST=your.hostinger.server
-HOSTINGER_PORT=22
-HOSTINGER_USER=your_username
-HOSTINGER_PASS=your_password
-HOSTINGER_REMOTE_PATH=/public_html/ngwcommerce
+```bash
+npm run deploy
 ```
 
-Optional overrides:
+What it does:
+1. Cleans previous `dist/`.
+2. Builds production with base href for subdirectory.
+3. Copies build output to a temp dir.
+4. Checks out (or creates) `release` branch (orphan if first time).
+5. Wipes working tree (except `.git`).
+6. Copies build files, generates `.htaccess` and `deployment-info.json`.
+7. Commits and pushes `release`.
+8. Returns to original branch.
 
-```
-# Force strategy (full|incremental)
-DEPLOY_STRATEGY=full
-# Dry run without uploading
-DEPLOY_DRY_RUN=true
-```
+Result: `release` branch contains only deployable static assets.
 
-## Files Added
+## Key Files
 
-* `scripts/deploy.js` – Node script performing build + SFTP sync.
-* `.env.example` – Template for required variables.
-* `package.json` – Added `build:prod` and `deploy` scripts.
+* `scripts/deploy-release.sh` – Branch-switch deployment script.
+* `.github/workflows/release-deploy.yml` – Webhook invocation workflow.
+* `deployment-info.json` (generated) – Metadata snapshot of deploy.
 
-## How It Works
-1. Determines current git branch.
-2. Runs production build (`ng build --configuration=production`).
-3. Collects files in `dist/ngw-commerce`.
-4. Connects via SFTP using credentials.
-5. If strategy = full: removes remote files (except `.htaccess`).
-6. Uploads all build artifacts.
-7. Writes `deploy-info.json` with metadata.
+## Webhook Flow
+Pushes to `release` trigger the GitHub Action, which calls Hostinger webhook. Hostinger then pulls the repo (if configured in its Git integration) and deploys the `release` branch contents into `/public_html/ngwcommerce`.
 
-## Dry Run Example
-
-```
-DEPLOY_DRY_RUN=true npm run deploy
-```
+## Rollback
+Checkout prior release commit locally and re-run the manual deploy script (from `development`) after resetting to that build state or tag.
 
 ## Security Notes
-* Do not commit `.env`.
-* Prefer generating a restricted SFTP user limited to the target path.
-* Rotate credentials if leaked.
+* Protect the `release` branch (require PR, restrict direct pushes).
+* Avoid placing secrets in deployment assets; they become public.
 
 ## Troubleshooting
 | Issue | Cause | Fix |
 |-------|-------|-----|
-| Missing env error | Not all required vars set | Copy `.env.example` -> `.env` and fill in |
-| Dist directory not found | Build failed | Check terminal output for Angular errors |
-| Authentication failure | Wrong credentials | Verify Hostinger FTP/SFTP settings |
-| Slow uploads | Large asset set | Enable gzip on server, ensure caching headers |
+| Release missing index.html | Copy failed | Re-run script; check write permissions |
+| Webhook not deploying | Hostinger not linked | Configure Git repo in Hostinger panel |
+| Old assets still served | Browser cache | Hard refresh / configure cache headers |
+| Build path wrong | Angular output changed | Update script's build directory discovery |
 
 ## Future Improvements
-* Differential checksum-based uploads.
-* Automatic invalidation of CDN caches (if added later).
-* Optional rollback to prior `deploy-info.json` snapshot.
+* Automated tagging per deploy (e.g. `deploy-YYYYMMDD-HHMM`).
+* Size manifest for quick diff of asset changes.
+* Optional integrity hash mapping.
 
 ## Hostinger Webhook Integration (CI)
 
@@ -90,9 +79,9 @@ A GitHub Actions workflow (`.github/workflows/release-deploy.yml`) triggers the 
 ### When to Use Each Method
 | Method | Pros | Cons | Recommended Use |
 |-------|------|------|-----------------|
-| SFTP Script (`npm run deploy`) | Immediate manual control; can deploy any branch | Requires credentials locally | Ad-hoc deploys, hotfix validation |
-| Hostinger Webhook (CI) | Fully automated on push; no local creds needed | Limited to release branch; opaque server process | Standard production releases |
-| Both Combined | Redundancy; flexibility | Two paths to maintain | Migration / fallback period |
+| Branch-switch Script | Deterministic release artifacts | Rewrites branch history; static-only | Normal deployments |
+| Hostinger Webhook | Auto trigger | Requires panel setup | Hands-off releases |
+| Combined | Resilient | More moving parts | Production with manual fallback |
 
 ### Hardening Suggestions
 * Restrict who can push to `release` (protected branch).
@@ -108,4 +97,4 @@ if: github.event.head_commit.message !~ /\[skip-deploy\]/
 Add `[skip-deploy]` to a commit message to bypass.
 
 ---
-Last updated: Automated script introduction.
+Last updated: Switched to branch-switch deployment model.
