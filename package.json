@@ -6,6 +6,8 @@
     "start": "ng serve --port 5300",
     "serve": "ng serve --port 5300",
     "build": "ng build",
+    "build:prod": "ng build --configuration=production",
+    "deploy": "node scripts/deploy.js",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },
