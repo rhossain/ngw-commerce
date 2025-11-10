@@ -17,8 +17,8 @@ if [ "${CURRENT_BRANCH}" != "development" ]; then
 echo -e "${BLUE}🧹 Cleaning previous dist ...${RESET}"
 rm -rf dist/
 
-echo -e "${BLUE}🔨 Building production with base href /${SUBDIRECTORY}/ ...${RESET}"
-npm run build -- --configuration=production --base-href="/${SUBDIRECTORY}/"
+echo -e "${BLUE}🔨 Building production with base href / ...${RESET}"
+npm run build -- --configuration=production --base-href="/"
 
 INDEX_FILE=$(find dist -name index.html -type f | head -1 || true)
 if [ -z "${INDEX_FILE}" ]; then echo -e "${RED}❌ Build failed: index.html not found${RESET}"; exit 1; fi
@@ -52,10 +52,10 @@ if [ ! -f index.html ]; then echo -e "${RED}❌ Missing index.html after copy${R
 echo -e "${BLUE}⚙️ Writing .htaccess for Angular SPA routing ...${RESET}"
 cat > .htaccess <<EOF
 RewriteEngine On
-RewriteBase /${SUBDIRECTORY}/
+RewriteBase /
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule . /${SUBDIRECTORY}/index.html [L]
+RewriteRule . /index.html [L]
 EOF
 
 echo -e "${BLUE}📝 Writing deployment-info.json ...${RESET}"
@@ -63,8 +63,8 @@ cat > deployment-info.json <<EOF
 {
   "deployedAt": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
   "sourceBranch": "${CURRENT_BRANCH}",
-  "subdirectory": "${SUBDIRECTORY}",
-  "baseHref": "/${SUBDIRECTORY}/",
+  "subdomain": "ngwcommerce.rshossain.me",
+  "baseHref": "/",
   "buildDir": "${BUILD_DIR}",
   "node": "$(node --version 2>/dev/null || echo unknown)",
   "user": "$(whoami)@$(hostname)"
@@ -78,7 +78,7 @@ if git diff --cached --quiet; then
   git checkout "${CURRENT_BRANCH}"; echo -e "${GREEN}✨ Done${RESET}"; exit 0
 fi
 
-COMMIT_MSG="Deploy ${SUBDIRECTORY} $(date '+%Y-%m-%d %H:%M:%S') from ${CURRENT_BRANCH}"
+COMMIT_MSG="Deploy to ngwcommerce.rshossain.me $(date '+%Y-%m-%d %H:%M:%S') from ${CURRENT_BRANCH}"
 echo -e "${BLUE}💾 Committing: ${RESET}${COMMIT_MSG}"
 git commit -m "${COMMIT_MSG}"
 
