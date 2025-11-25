@@ -1,6 +1,6 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://woocommerce.rshossain.com/wp-json',
+  apiUrl: 'https://ngwcommerce.rshossain.me/admin/wp-json',
   
   // Simple JWT Login Configuration
   auth: {
@@ -22,12 +22,12 @@ export const environment = {
     autoRefresh: true
   },
   
-  woocommerceApi: 'https://woocommerce.rshossain.com/wp-json/wc/v3',
-  storeApi: 'https://woocommerce.rshossain.com/wp-json/wc/store/v1',
-  customApi: 'https://woocommerce.rshossain.com/wp-json/wc-angular/v1',
-  reviewsApi: 'https://woocommerce.rshossain.com/wp-json/custom/v1',
-  consumerKey: 'ck_8fde1482ddc884c1c36fdfcd26699c8970bd8faa',
-  consumerSecret: 'cs_96a821759a1f187b1af994802b932524c02b1834',
+  woocommerceApi: 'https://ngwcommerce.rshossain.me/admin/wp-json/wc/v3',
+  storeApi: 'https://ngwcommerce.rshossain.me/admin/wp-json/wc/store/v1',
+  customApi: 'https://ngwcommerce.rshossain.me/admin/wp-json/wc-angular/v1',
+  reviewsApi: 'https://ngwcommerce.rshossain.me/admin/wp-json/custom/v1',
+  consumerKey: 'ck_73cffbd6bafd367edb661c800c6cb26cb950a231',
+  consumerSecret: 'cs_b0002026563d78ee8e1d8794cf3811e5303dd738',
   stripePublishableKey: 'pk_live_your_stripe_key',
   googleAnalyticsId: 'G-XXXXXXXXXX',
   defaultCurrency: 'USD',
@@ -35,5 +35,5 @@ export const environment = {
   itemsPerPage: 12,
   freeShippingThreshold: 100,
   flatShippingEstimate: 12.99,
-  savedCartSyncUrl: 'https://woocommerce.rshossain.com/wp-json/wc-angular/v1/saved-cart'
+  savedCartSyncUrl: 'https://ngwcommerce.rshossain.me/admin/wp-json/wc-angular/v1/saved-cart'
 };
