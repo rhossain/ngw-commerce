@@ -1,1 +1,0 @@
-import{o as t,p as r}from"./chunk-EGAHYV5U.js";var o=r("products"),s=t(o,e=>e.products),l=t(o,e=>e.selectedProduct),d=t(o,e=>e.loading),a=t(o,e=>e.error),n=t(o,e=>({total:e.total,pages:e.pages,currentPage:e.currentPage}));export{s as a,l as b,d as c,n as d};
