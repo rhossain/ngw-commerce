@@ -169,3 +169,201 @@ Accessibility:
 /* Focus outline helper */
 .ngwcs-tab:focus-visible, .ngwcs-form .button:focus-visible, .ngwcs-filter-bar input[type="text"]:focus-visible { outline:none; box-shadow: var(--ngwcs-shadow-focus); }
 
+/* Modern Accordion Styles for Category Products Sections */
+.ngwcs-accordion {
+	border: 1px solid var(--ngwcs-border-subtle);
+	border-radius: var(--ngwcs-radius-sm);
+	background: #fff;
+	overflow: hidden;
+}
+
+.ngwcs-accordion-item {
+	border-bottom: 1px solid var(--ngwcs-border-row);
+	transition: box-shadow var(--ngwcs-transition);
+}
+
+.ngwcs-accordion-item:last-child {
+	border-bottom: none;
+}
+
+.ngwcs-accordion-item:hover {
+	box-shadow: inset 0 0 0 1px rgba(34, 113, 177, 0.1);
+}
+
+.ngwcs-accordion-header {
+	display: flex;
+	align-items: center;
+	padding: 14px 16px;
+	background: var(--ngwcs-surface);
+	border-bottom: 1px solid transparent;
+	transition: all var(--ngwcs-transition);
+}
+
+.ngwcs-accordion-header[data-state=\"open\"] {
+	background: #f0f7ff;
+	border-bottom-color: var(--ngwcs-border-subtle);
+}
+
+.ngwcs-accordion-trigger {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	background: none;
+	border: none;
+	padding: 0;
+	text-align: left;
+	cursor: pointer;
+	color: #1e293b;
+	font-weight: 600;
+	font-size: 14px;
+	transition: color var(--ngwcs-transition);
+}
+
+.ngwcs-accordion-trigger:hover {
+	color: var(--ngwcs-primary);
+}
+
+.ngwcs-accordion-trigger:focus-visible {
+	outline: none;
+	color: var(--ngwcs-primary);
+}
+
+.ngwcs-accordion-icon {
+	font-size: 18px;
+	transition: transform var(--ngwcs-transition);
+	color: #64748b;
+}
+
+.ngwcs-accordion-header[data-state=\"open\"] .ngwcs-accordion-icon {
+	transform: rotate(180deg);
+	color: var(--ngwcs-primary);
+}
+
+.ngwcs-section-title {
+	font-size: 15px;
+	color: #1e293b;
+	font-weight: 600;
+}
+
+.ngwcs-section-meta {
+	font-size: 12px;
+	color: #64748b;
+	font-weight: 500;
+	margin-left: auto;
+	padding: 3px 10px;
+	background: #e2e8f0;
+	border-radius: var(--ngwcs-radius-full);
+}
+
+.ngwcs-accordion-header[data-state=\"open\"] .ngwcs-section-meta {
+	background: #dbeafe;
+	color: var(--ngwcs-primary);
+}
+
+.ngwcs-remove-cp-section {
+	margin-left: 12px;
+	padding: 6px 10px;
+	color: #dc2626;
+	border: 1px solid transparent;
+	background: transparent;
+	border-radius: var(--ngwcs-radius-sm);
+	cursor: pointer;
+	transition: all var(--ngwcs-transition);
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.ngwcs-remove-cp-section:hover {
+	background: #fee2e2;
+	border-color: #fecaca;
+	color: #dc2626;
+}
+
+.ngwcs-remove-cp-section .dashicons {
+	font-size: 16px;
+}
+
+.ngwcs-accordion-content {
+	padding: 0;
+	overflow: hidden;
+	transition: max-height 0.3s ease-out, opacity 0.2s ease-out;
+}
+
+.ngwcs-section-fields {
+	padding: 20px 24px 24px;
+	background: #fff;
+}
+
+.ngwcs-section-fields .form-table {
+	margin-top: 0;
+}
+
+.ngwcs-section-fields .form-table th {
+	padding-left: 0;
+	width: 200px;
+	font-weight: 600;
+	color: #1e293b;
+}
+
+.ngwcs-section-fields .form-table td {
+	padding-right: 0;
+}
+
+.ngwcs-section-fields .form-table input[type=\"number\"],
+.ngwcs-section-fields .form-table select {
+	max-width: 160px;
+	padding: 8px 10px;
+	border: 1px solid #cbd5e0;
+	border-radius: var(--ngwcs-radius-sm);
+	font-size: 14px;
+	transition: border-color var(--ngwcs-transition), box-shadow var(--ngwcs-transition);
+}
+
+.ngwcs-section-fields .form-table input[type=\"number\"]:focus,
+.ngwcs-section-fields .form-table select:focus {
+	border-color: var(--ngwcs-primary);
+	box-shadow: 0 0 0 3px rgba(34, 113, 177, 0.1);
+	outline: none;
+}
+
+.ngwcs-section-fields .form-table input[type=\"checkbox\"] {
+	width: 18px;
+	height: 18px;
+	margin: 0;
+	cursor: pointer;
+}
+
+.ngwcs-section-fields .description {
+	margin-top: 6px;
+	font-size: 13px;
+	color: #64748b;
+	font-style: normal;
+}
+
+/* Add Section Button Enhancements */
+.ngwcs-add-cp-section {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 10px 18px;
+	font-size: 14px;
+	font-weight: 600;
+	border-radius: var(--ngwcs-radius-sm);
+	transition: all var(--ngwcs-transition);
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.ngwcs-add-cp-section:hover {
+	transform: translateY(-1px);
+	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.ngwcs-add-cp-section:active {
+	transform: translateY(0);
+}
+
+.ngwcs-add-cp-section .dashicons {
+	font-size: 18px;
+}

@@ -45,6 +45,43 @@ function ngwcs_activate() {
             'hero_slider_order'          => array(),
             'featured_categories'        => array(), // array of category term IDs
             'highlighted_category_map'   => array(), // category_id => array(product IDs)
+            'component_settings'         => array(
+                'category_products_sections' => array(
+                    array(
+                        'categoryId'           => 22,  // Smartphones
+                        'displayStyle'         => 'carousel',
+                        'limit'                => 8,
+                        'carouselAutoplay'     => false,
+                        'carouselDelay'        => 3000,
+                        'carouselLoop'         => true,
+                        'carouselSlidesPerView'=> 4,
+                        'carouselSpaceBetween' => 20,
+                        'gridColumns'          => 4,
+                        'sortBy'               => 'date',
+                        'sortOrder'            => 'desc',
+                        'showViewAll'          => true,
+                        'showOnSaleOnly'       => false,
+                        'showFeaturedOnly'     => false,
+                    ),
+                ),
+                'categories_display' => array(
+                    'displayStyle'    => 'flat-list',
+                    'size'            => 'md',
+                    'showTitle'       => true,
+                    'showViewAll'     => true,
+                    'showCount'       => false,
+                    'enableHover'     => true,
+                    'cardStyle'       => 'elevated',
+                    'gridColumns'     => array( 'mobile' => 3, 'tablet' => 4, 'desktop' => 7 ),
+                    'gridGap'         => 24,
+                    'carouselSlidesPerView' => 'auto',
+                    'carouselSpaceBetween'  => 20,
+                    'carouselLoop'          => false,
+                    'carouselAutoplay'      => false,
+                    'carouselNavigation'    => true,
+                    'carouselPagination'    => true,
+                ),
+            ),
             'updated_at'                 => current_time( 'mysql' ),
             'version'                    => NGWCS_VERSION,
         ), '', false );
@@ -101,6 +138,44 @@ function ngwcs_get_settings() {
         'hero_slider_order'        => array(),
         'featured_categories'      => array(),
         'highlighted_category_map' => array(),
+        'component_settings'       => array(
+            // Default to sections array (supports multiple instances)
+            'category_products_sections' => array(
+                array(
+                    'categoryId'           => 22,
+                    'displayStyle'         => 'carousel',
+                    'limit'                => 8,
+                    'carouselAutoplay'     => false,
+                    'carouselDelay'        => 3000,
+                    'carouselLoop'         => true,
+                    'carouselSlidesPerView'=> 4,
+                    'carouselSpaceBetween' => 20,
+                    'gridColumns'          => 4,
+                    'sortBy'               => 'date',
+                    'sortOrder'            => 'desc',
+                    'showViewAll'          => true,
+                    'showOnSaleOnly'       => false,
+                    'showFeaturedOnly'     => false,
+                ),
+            ),
+            'categories_display' => array(
+                'displayStyle'    => 'flat-list',
+                'size'            => 'md',
+                'showTitle'       => true,
+                'showViewAll'     => true,
+                'showCount'       => false,
+                'enableHover'     => true,
+                'cardStyle'       => 'elevated',
+                'gridColumns'     => array( 'mobile' => 3, 'tablet' => 4, 'desktop' => 7 ),
+                'gridGap'         => 24,
+                'carouselSlidesPerView' => 'auto',
+                'carouselSpaceBetween'  => 20,
+                'carouselLoop'          => false,
+                'carouselAutoplay'      => false,
+                'carouselNavigation'    => true,
+                'carouselPagination'    => true,
+            ),
+        ),
         'updated_at'               => '',
         'version'                  => NGWCS_VERSION,
     );
@@ -149,6 +224,71 @@ function ngwcs_update_settings( $data ) {
             }
         }
         $settings['highlighted_category_map'] = $clean_map;
+    }
+    // Sanitize component settings.
+    if ( isset( $data['component_settings'] ) && is_array( $data['component_settings'] ) ) {
+        $clean_components = array();
+        
+        // Sanitize category_products_sections (array of sections)
+        if ( isset( $data['component_settings']['category_products_sections'] ) && is_array( $data['component_settings']['category_products_sections'] ) ) {
+            $sections = $data['component_settings']['category_products_sections'];
+            $clean_sections = array();
+            
+            foreach ( $sections as $section ) {
+                if ( ! is_array( $section ) ) continue;
+                
+                $clean_sections[] = array(
+                    'categoryId'           => isset( $section['categoryId'] ) ? absint( $section['categoryId'] ) : 0,
+                    'displayStyle'         => in_array( $section['displayStyle'] ?? '', array( 'carousel', 'grid', 'list' ) ) ? $section['displayStyle'] : 'carousel',
+                    'limit'                => isset( $section['limit'] ) ? absint( $section['limit'] ) : 8,
+                    'carouselAutoplay'     => isset( $section['carouselAutoplay'] ) ? (bool) $section['carouselAutoplay'] : false,
+                    'carouselDelay'        => isset( $section['carouselDelay'] ) ? absint( $section['carouselDelay'] ) : 3000,
+                    'carouselLoop'         => isset( $section['carouselLoop'] ) ? (bool) $section['carouselLoop'] : true,
+                    'carouselSlidesPerView'=> isset( $section['carouselSlidesPerView'] ) ? absint( $section['carouselSlidesPerView'] ) : 4,
+                    'carouselSpaceBetween' => isset( $section['carouselSpaceBetween'] ) ? absint( $section['carouselSpaceBetween'] ) : 20,
+                    'gridColumns'          => isset( $section['gridColumns'] ) ? absint( $section['gridColumns'] ) : 4,
+                    'sortBy'               => in_array( $section['sortBy'] ?? '', array( 'date', 'popularity', 'rating', 'price' ) ) ? $section['sortBy'] : 'date',
+                    'sortOrder'            => in_array( $section['sortOrder'] ?? '', array( 'asc', 'desc' ) ) ? $section['sortOrder'] : 'desc',
+                    'showViewAll'          => isset( $section['showViewAll'] ) ? (bool) $section['showViewAll'] : true,
+                    'showOnSaleOnly'       => isset( $section['showOnSaleOnly'] ) ? (bool) $section['showOnSaleOnly'] : false,
+                    'showFeaturedOnly'     => isset( $section['showFeaturedOnly'] ) ? (bool) $section['showFeaturedOnly'] : false,
+                );
+            }
+            
+            $clean_components['category_products_sections'] = $clean_sections;
+        }
+        
+        // Sanitize categories_display settings
+        if ( isset( $data['component_settings']['categories_display'] ) && is_array( $data['component_settings']['categories_display'] ) ) {
+            $cd = $data['component_settings']['categories_display'];
+            $grid_cols = array( 'mobile' => 3, 'tablet' => 4, 'desktop' => 7 );
+            if ( isset( $cd['gridColumns'] ) && is_array( $cd['gridColumns'] ) ) {
+                $grid_cols = array(
+                    'mobile'  => isset( $cd['gridColumns']['mobile'] ) ? absint( $cd['gridColumns']['mobile'] ) : 3,
+                    'tablet'  => isset( $cd['gridColumns']['tablet'] ) ? absint( $cd['gridColumns']['tablet'] ) : 4,
+                    'desktop' => isset( $cd['gridColumns']['desktop'] ) ? absint( $cd['gridColumns']['desktop'] ) : 7,
+                );
+            }
+            $clean_components['categories_display'] = array(
+                'displayStyle'    => in_array( $cd['displayStyle'] ?? '', array( 'flat-list', 'masonry-grid', 'carousel' ) ) ? $cd['displayStyle'] : 'flat-list',
+                'size'            => in_array( $cd['size'] ?? '', array( 'sm', 'md', 'lg', 'xl' ) ) ? $cd['size'] : 'md',
+                'showTitle'       => isset( $cd['showTitle'] ) ? (bool) $cd['showTitle'] : true,
+                'showViewAll'     => isset( $cd['showViewAll'] ) ? (bool) $cd['showViewAll'] : true,
+                'showCount'       => isset( $cd['showCount'] ) ? (bool) $cd['showCount'] : false,
+                'enableHover'     => isset( $cd['enableHover'] ) ? (bool) $cd['enableHover'] : true,
+                'cardStyle'       => in_array( $cd['cardStyle'] ?? '', array( 'minimal', 'elevated', 'bordered' ) ) ? $cd['cardStyle'] : 'elevated',
+                'gridColumns'     => $grid_cols,
+                'gridGap'         => isset( $cd['gridGap'] ) ? absint( $cd['gridGap'] ) : 24,
+                'carouselSlidesPerView' => isset( $cd['carouselSlidesPerView'] ) ? sanitize_text_field( $cd['carouselSlidesPerView'] ) : 'auto',
+                'carouselSpaceBetween'  => isset( $cd['carouselSpaceBetween'] ) ? absint( $cd['carouselSpaceBetween'] ) : 20,
+                'carouselLoop'          => isset( $cd['carouselLoop'] ) ? (bool) $cd['carouselLoop'] : false,
+                'carouselAutoplay'      => isset( $cd['carouselAutoplay'] ) ? (bool) $cd['carouselAutoplay'] : false,
+                'carouselNavigation'    => isset( $cd['carouselNavigation'] ) ? (bool) $cd['carouselNavigation'] : true,
+                'carouselPagination'    => isset( $cd['carouselPagination'] ) ? (bool) $cd['carouselPagination'] : true,
+            );
+        }
+        
+        $settings['component_settings'] = $clean_components;
     }
     $settings['updated_at'] = current_time( 'mysql' );
     update_option( NGWCS_OPTION_KEY, $settings );

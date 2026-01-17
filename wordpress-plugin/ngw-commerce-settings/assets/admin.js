@@ -598,6 +598,94 @@
         });
     }
 
+    // Dynamic Category Products Sections: add/remove blocks based on hidden template
+    function initCategoryProductsSections(){
+        const $container = $('.ngwcs-cp-sections');
+        if(!$container.length) return;
+        
+        function nextIndex(){
+            let max = -1;
+            $container.children('.ngwcs-cp-section').each(function(){
+                const idx = parseInt($(this).data('index'),10);
+                if(!isNaN(idx) && idx > max){ max = idx; }
+            });
+            return max + 1;
+        }
+        
+        function addSection(){
+            const idx = nextIndex();
+            const tplHtml = $('#ngwcs-cp-template').html();
+            if(!tplHtml) return;
+            const html = tplHtml.replace(/__INDEX__/g, String(idx)).replace(/__NUM__/g, String(idx+1));
+            const $node = $(html);
+            $container.append($node);
+            // Auto-expand the newly added section
+            expandSection($node.find('.ngwcs-accordion-header'));
+        }
+        
+        function toggleSection($header) {
+            const currentState = $header.attr('data-state');
+            if (currentState === 'open') {
+                collapseSection($header);
+            } else {
+                expandSection($header);
+            }
+        }
+        
+        function expandSection($header) {
+            const $content = $header.siblings('.ngwcs-accordion-content');
+            const $trigger = $header.find('.ngwcs-accordion-trigger');
+            
+            $header.attr('data-state', 'open');
+            $trigger.attr('aria-expanded', 'true');
+            $content.slideDown(250);
+        }
+        
+        function collapseSection($header) {
+            const $content = $header.siblings('.ngwcs-accordion-content');
+            const $trigger = $header.find('.ngwcs-accordion-trigger');
+            
+            $header.attr('data-state', 'closed');
+            $trigger.attr('aria-expanded', 'false');
+            $content.slideUp(250);
+        }
+        
+        // Add section button
+        $('.ngwcs-add-cp-section').on('click', function(){ 
+            addSection(); 
+        });
+        
+        // Remove section button
+        $container.on('click', '.ngwcs-remove-cp-section', function(){
+            const $sec = $(this).closest('.ngwcs-cp-section');
+            if (confirm('Are you sure you want to remove this category products section?')) {
+                $sec.fadeOut(200, function() {
+                    $(this).remove();
+                });
+            }
+        });
+        
+        // Accordion toggle
+        $container.on('click', '.ngwcs-accordion-trigger', function(e){
+            e.preventDefault();
+            const $header = $(this).closest('.ngwcs-accordion-header');
+            toggleSection($header);
+        });
+        
+        // Update section title when category ID changes
+        $container.on('change', 'input[name*="[categoryId]"]', function(){
+            const $input = $(this);
+            const $section = $input.closest('.ngwcs-cp-section');
+            const $title = $section.find('.ngwcs-section-title');
+            const catId = $input.val();
+            
+            if (catId && catId > 0) {
+                // Update title placeholder until save/reload
+                $title.text('Category #' + catId);
+            }
+        });
+    }
+
     $(function(){
         injectFilters();
         initFilters();
@@ -607,6 +695,7 @@
     initHeroIncremental();
         initCategoryLoad();
     initCategoryBulkSelect();
+        initCategoryProductsSections();
         initFlushCache();
         // Primary click binding
         $('.ngwcs-tab-nav').on('click', '.ngwcs-tab', function(e){

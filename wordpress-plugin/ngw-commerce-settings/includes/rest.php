@@ -111,7 +111,7 @@ class NGWCS_Rest {
     $ordered_ids = ! empty( $settings['hero_slider_order'] ) ? $settings['hero_slider_order'] : $settings['hero_slider_products'];
     $settings['hero_slider_details'] = $this->augment_products( $ordered_ids );
     // Increment schema version when we add/change fields so ETag busts and clients refetch body.
-    $settings['schema_version'] = 5; // v5 adds product slug for internal routing
+    $settings['schema_version'] = 6; // v6 adds component_settings for category-products and categories-display
         $settings['featured_category_details'] = $this->augment_categories( $settings['featured_categories'] );
         $settings['highlighted_category_details'] = $this->augment_map( $settings['highlighted_category_map'] );
         $settings['cache_version'] = intval( get_option( NGWCS_CACHE_VERSION_OPTION, 1 ) );

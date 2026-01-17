@@ -30,6 +30,9 @@ export class HomeComponent implements OnInit {
   heroLoading = true;
   heroError: string | null = null;
 
+  // Category products sections from WordPress
+  categoryProductsSections: any[] = [];
+
   // Top Categories
   topCategories: CategoryDisplay[] = [
     { id: 1, name: 'Mobile', slug: 'mobile', icon: 'fa-mobile-alt' },
@@ -105,6 +108,10 @@ export class HomeComponent implements OnInit {
               { id: 'fallback-2', title: 'Add Products', description: 'Select hero products in WP Admin.', active: false }
             ];
           }
+          
+          // Load category products sections
+          this.categoryProductsSections = this.settingsService.getCategoryProductsSections();
+          console.log('[HomeComponent] Category Products Sections:', this.categoryProductsSections);
         },
         error: err => {
           console.error('[HomeComponent] Hero settings fetch failed', err);

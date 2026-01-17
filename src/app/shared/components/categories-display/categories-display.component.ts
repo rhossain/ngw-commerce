@@ -8,6 +8,7 @@ import {
   CategoryGridOptions,
   CategoryCarouselOptions
 } from './categories-display.model';
+import { CommerceSettingsService } from '../../../core/services/commerce-settings.service';
 
 /**
  * CategoriesDisplayComponent
@@ -38,6 +39,9 @@ import {
 export class CategoriesDisplayComponent implements OnInit {
   /** Array of categories to display */
   @Input() categories: CategoryDisplay[] = [];
+
+  /** WordPress settings flag */
+  @Input() useWordPressSettings: boolean = false;
 
   /** Display style: 'flat-list' | 'masonry-grid' | 'carousel' */
   @Input() displayStyle: CategoryDisplayStyle = 'flat-list';
@@ -95,7 +99,14 @@ export class CategoriesDisplayComponent implements OnInit {
   /** Card style for masonry grid (rounded corners, shadow, etc.) */
   @Input() cardStyle: 'minimal' | 'elevated' | 'bordered' = 'elevated';
 
+  constructor(private settingsService: CommerceSettingsService) {}
+
   ngOnInit(): void {
+    // Apply WordPress settings if enabled
+    if (this.useWordPressSettings) {
+      this.applyWordPressSettings();
+    }
+
     // Set default grid options if not provided
     if (!this.gridOptions.columns) {
       this.gridOptions.columns = { mobile: 3, tablet: 4, desktop: 7 };
@@ -170,5 +181,58 @@ export class CategoriesDisplayComponent implements OnInit {
    */
   trackByCategory(index: number, category: CategoryDisplay): string | number {
     return category.id;
+  }
+
+  /**
+   * Apply WordPress settings to component configuration
+   * Only applies settings for properties that haven't been explicitly set via @Input
+   */
+  private applyWordPressSettings(): void {
+    const config = this.settingsService.getCategoriesDisplayConfig();
+    if (!config) {
+      console.warn('[CategoriesDisplayComponent] WordPress settings enabled but no configuration found');
+      return;
+    }
+
+    // Apply settings only if not explicitly set (checking against defaults)
+    if (this.displayStyle === 'flat-list') this.displayStyle = config.displayStyle;
+    if (this.size === 'md') this.size = config.size;
+    if (this.showTitle === true) this.showTitle = config.showTitle;
+    if (this.showViewAll === true) this.showViewAll = config.showViewAll;
+    if (this.showCount === false) this.showCount = config.showCount;
+    if (this.enableHover === true) this.enableHover = config.enableHover;
+    if (this.cardStyle === 'elevated') this.cardStyle = config.cardStyle;
+    
+    // Apply grid options
+    if (this.gridOptions.gap === 24) this.gridOptions.gap = config.gridGap;
+    if (!this.gridOptions.columns || 
+        (this.gridOptions.columns.mobile === 3 && 
+         this.gridOptions.columns.tablet === 4 && 
+         this.gridOptions.columns.desktop === 7)) {
+      this.gridOptions.columns = config.gridColumns;
+    }
+    
+    // Apply carousel options
+    if (this.carouselOptions.slidesPerView === 'auto') {
+      // Handle both string and number types from config
+      const slidesPerView = config.carouselSlidesPerView;
+      this.carouselOptions.slidesPerView = slidesPerView === 'auto' ? 'auto' : 
+        (typeof slidesPerView === 'number' ? slidesPerView : parseInt(String(slidesPerView), 10) || 'auto');
+    }
+    if (this.carouselOptions.spaceBetween === 20) {
+      this.carouselOptions.spaceBetween = config.carouselSpaceBetween;
+    }
+    if (this.carouselOptions.loop === false) {
+      this.carouselOptions.loop = config.carouselLoop;
+    }
+    if (this.carouselOptions.autoplay === false) {
+      this.carouselOptions.autoplay = config.carouselAutoplay;
+    }
+    if (this.carouselOptions.navigation === true) {
+      this.carouselOptions.navigation = config.carouselNavigation;
+    }
+    if (this.carouselOptions.pagination === true) {
+      this.carouselOptions.pagination = config.carouselPagination;
+    }
   }
 }

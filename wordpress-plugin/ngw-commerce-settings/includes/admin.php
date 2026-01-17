@@ -106,6 +106,7 @@ class NGWCS_Admin {
         echo '<button type="button" class="ngwcs-tab is-active" data-tab="hero" role="tab" aria-selected="true">' . esc_html__( 'Hero Products', 'ngw-commerce-settings' ) . '</button>';
         echo '<button type="button" class="ngwcs-tab" data-tab="featured" role="tab" aria-selected="false">' . esc_html__( 'Featured Categories', 'ngw-commerce-settings' ) . '</button>';
         echo '<button type="button" class="ngwcs-tab" data-tab="highlighted" role="tab" aria-selected="false">' . esc_html__( 'Highlighted Products', 'ngw-commerce-settings' ) . '</button>';
+        echo '<button type="button" class="ngwcs-tab" data-tab="components" role="tab" aria-selected="false">' . esc_html__( 'Component Settings', 'ngw-commerce-settings' ) . '</button>';
         echo '</nav>';
         echo '<div class="ngwcs-tab-panels">';
 
@@ -128,6 +129,13 @@ class NGWCS_Admin {
         echo '<h2>' . esc_html__( 'Highlighted Products by Category', 'ngw-commerce-settings' ) . '</h2>';
         echo '<p class="description">' . esc_html__( 'Expand a category and choose products to highlight within it.', 'ngw-commerce-settings' ) . '</p>';
         $this->render_highlighted_products_lists( $settings );
+        echo '</section>';
+
+        // Component Settings panel
+        echo '<section class="ngwcs-tab-panel" data-panel="components" role="tabpanel" hidden>';
+        echo '<h2>' . esc_html__( 'Component Settings', 'ngw-commerce-settings' ) . '</h2>';
+        echo '<p class="description">' . esc_html__( 'Configure default settings for category-products and categories-display components used in the Angular app.', 'ngw-commerce-settings' ) . '</p>';
+        $this->render_component_settings( $settings );
         echo '</section>';
 
         echo '</div>'; // panels
@@ -329,5 +337,257 @@ class NGWCS_Admin {
             $out[] = array( 'id' => $id, 'name' => $name );
         }
         return $out;
+    }
+
+    private function render_component_settings( $settings ) {
+        $comp_settings = isset( $settings['component_settings'] ) ? $settings['component_settings'] : array();
+        
+        // Render up to 3 sections; show existing ones first
+        $sections = isset( $comp_settings['category_products_sections'] ) && is_array( $comp_settings['category_products_sections'] ) ? $comp_settings['category_products_sections'] : array();
+        $cd = isset( $comp_settings['categories_display'] ) ? $comp_settings['categories_display'] : array();
+        $max_sections = 3;
+        $count = max( 1, min( count( $sections ), $max_sections ) );
+
+        echo '<div class="ngwcs-component-settings" style="max-width:900px;">';
+        echo '<h3 style="margin-top:20px;">' . esc_html__( 'Category Products Sections', 'ngw-commerce-settings' ) . '</h3>';
+        echo '<p class="description">' . esc_html__( 'Configure multiple category-products components for your homepage. Each section displays products from a specific category.', 'ngw-commerce-settings' ) . '</p>';
+        echo '<div class="ngwcs-cp-sections ngwcs-accordion" style="margin-top:16px;">';
+
+        for ( $i = 0; $i < $count; $i++ ) {
+            $cp = isset( $sections[$i] ) ? $sections[$i] : array();
+            $cat_name = isset( $cp['categoryId'] ) && $cp['categoryId'] ? get_term( absint( $cp['categoryId'] ), 'product_cat' ) : null;
+            $cat_label = $cat_name && ! is_wp_error( $cat_name ) ? $cat_name->name : __( 'Category', 'ngw-commerce-settings' ) . ' #' . intval( $i + 1 );
+            $is_first = ( $i === 0 );
+            echo '<div class="ngwcs-cp-section ngwcs-accordion-item" data-index="' . intval( $i ) . '">';
+            echo '<div class="ngwcs-accordion-header" data-state="' . ( $is_first ? 'open' : 'closed' ) . '">';
+            echo '<button type="button" class="ngwcs-accordion-trigger" aria-expanded="' . ( $is_first ? 'true' : 'false' ) . '">';
+            echo '<span class="dashicons dashicons-arrow-down-alt2 ngwcs-accordion-icon"></span>';
+            echo '<span class="ngwcs-section-title">' . esc_html( $cat_label ) . '</span>';
+            echo '<span class="ngwcs-section-meta">' . esc_html__( 'Section', 'ngw-commerce-settings' ) . ' #' . intval( $i + 1 ) . '</span>';
+            echo '</button>';
+            echo '<button type="button" class="button button-link-delete ngwcs-remove-cp-section" aria-label="' . esc_attr__( 'Remove this section', 'ngw-commerce-settings' ) . '">';
+            echo '<span class="dashicons dashicons-trash"></span>';
+            echo '</button>';
+            echo '</div>';
+            echo '<div class="ngwcs-accordion-content" style="' . ( $is_first ? '' : 'display:none;' ) . '">';
+            echo '<div class="ngwcs-section-fields">';
+            echo '<table class="form-table" role="presentation">';
+
+            // Category ID
+            echo '<tr><th scope="row"><label>' . esc_html__( 'Category ID', 'ngw-commerce-settings' ) . '</label></th><td>';
+            echo '<input type="number" name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][category_products_sections][' . intval( $i ) . '][categoryId]" value="' . esc_attr( isset( $cp['categoryId'] ) ? $cp['categoryId'] : 22 ) . '" min="1" />';
+            echo '<p class="description">' . esc_html__( 'WooCommerce category ID to display products from', 'ngw-commerce-settings' ) . '</p>';
+            echo '</td></tr>';
+
+            // Display Style
+            echo '<tr><th scope="row"><label>' . esc_html__( 'Display Style', 'ngw-commerce-settings' ) . '</label></th><td>';
+            echo '<select name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][category_products_sections][' . intval( $i ) . '][displayStyle]">';
+            $display_styles = array( 'carousel' => 'Carousel', 'grid' => 'Grid', 'list' => 'List' );
+            foreach ( $display_styles as $value => $label ) {
+                $selected = ( isset( $cp['displayStyle'] ) && $cp['displayStyle'] === $value ) ? 'selected' : '';
+                echo '<option value="' . esc_attr( $value ) . '" ' . $selected . '>' . esc_html( $label ) . '</option>';
+            }
+            echo '</select></td></tr>';
+
+            // Limit
+            echo '<tr><th scope="row"><label>' . esc_html__( 'Products Limit', 'ngw-commerce-settings' ) . '</label></th><td>';
+            echo '<input type="number" name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][category_products_sections][' . intval( $i ) . '][limit]" value="' . esc_attr( isset( $cp['limit'] ) ? $cp['limit'] : 8 ) . '" min="1" max="50" /></td></tr>';
+
+            // Carousel Autoplay
+            echo '<tr><th scope="row"><label>' . esc_html__( 'Carousel Autoplay', 'ngw-commerce-settings' ) . '</label></th><td>';
+            echo '<input type="checkbox" name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][category_products_sections][' . intval( $i ) . '][carouselAutoplay]" value="1" ' . checked( isset( $cp['carouselAutoplay'] ) && $cp['carouselAutoplay'], true, false ) . ' /></td></tr>';
+
+            // Carousel Delay
+            echo '<tr><th scope="row"><label>' . esc_html__( 'Carousel Delay (ms)', 'ngw-commerce-settings' ) . '</label></th><td>';
+            echo '<input type="number" name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][category_products_sections][' . intval( $i ) . '][carouselDelay]" value="' . esc_attr( isset( $cp['carouselDelay'] ) ? $cp['carouselDelay'] : 3000 ) . '" min="1000" max="10000" step="500" /></td></tr>';
+
+            // Carousel Loop
+            echo '<tr><th scope="row"><label>' . esc_html__( 'Carousel Loop', 'ngw-commerce-settings' ) . '</label></th><td>';
+            echo '<input type="checkbox" name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][category_products_sections][' . intval( $i ) . '][carouselLoop]" value="1" ' . checked( isset( $cp['carouselLoop'] ) && $cp['carouselLoop'], true, false ) . ' /></td></tr>';
+
+            // Carousel Slides Per View
+            echo '<tr><th scope="row"><label>' . esc_html__( 'Carousel Slides Per View', 'ngw-commerce-settings' ) . '</label></th><td>';
+            echo '<input type="number" name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][category_products_sections][' . intval( $i ) . '][carouselSlidesPerView]" value="' . esc_attr( isset( $cp['carouselSlidesPerView'] ) ? $cp['carouselSlidesPerView'] : 4 ) . '" min="1" max="8" /></td></tr>';
+
+            // Carousel Space Between
+            echo '<tr><th scope="row"><label>' . esc_html__( 'Carousel Space Between (px)', 'ngw-commerce-settings' ) . '</label></th><td>';
+            echo '<input type="number" name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][category_products_sections][' . intval( $i ) . '][carouselSpaceBetween]" value="' . esc_attr( isset( $cp['carouselSpaceBetween'] ) ? $cp['carouselSpaceBetween'] : 20 ) . '" min="0" max="60" /></td></tr>';
+
+            // Grid Columns
+            echo '<tr><th scope="row"><label>' . esc_html__( 'Grid Columns', 'ngw-commerce-settings' ) . '</label></th><td>';
+            echo '<input type="number" name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][category_products_sections][' . intval( $i ) . '][gridColumns]" value="' . esc_attr( isset( $cp['gridColumns'] ) ? $cp['gridColumns'] : 4 ) . '" min="1" max="6" /></td></tr>';
+
+            // Sort By
+            echo '<tr><th scope="row"><label>' . esc_html__( 'Sort By', 'ngw-commerce-settings' ) . '</label></th><td>';
+            echo '<select name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][category_products_sections][' . intval( $i ) . '][sortBy]">';
+            $sort_options = array( 'date' => 'Date', 'popularity' => 'Popularity', 'rating' => 'Rating', 'price' => 'Price' );
+            foreach ( $sort_options as $value => $label ) {
+                $selected = ( isset( $cp['sortBy'] ) && $cp['sortBy'] === $value ) ? 'selected' : '';
+                echo '<option value="' . esc_attr( $value ) . '" ' . $selected . '>' . esc_html( $label ) . '</option>';
+            }
+            echo '</select></td></tr>';
+
+            // Sort Order
+            echo '<tr><th scope="row"><label>' . esc_html__( 'Sort Order', 'ngw-commerce-settings' ) . '</label></th><td>';
+            echo '<select name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][category_products_sections][' . intval( $i ) . '][sortOrder]">';
+            $order_options = array( 'asc' => 'Ascending', 'desc' => 'Descending' );
+            foreach ( $order_options as $value => $label ) {
+                $selected = ( isset( $cp['sortOrder'] ) && $cp['sortOrder'] === $value ) ? 'selected' : '';
+                echo '<option value="' . esc_attr( $value ) . '" ' . $selected . '>' . esc_html( $label ) . '</option>';
+            }
+            echo '</select></td></tr>';
+
+            // Show View All
+            echo '<tr><th scope="row"><label>' . esc_html__( 'Show View All Button', 'ngw-commerce-settings' ) . '</label></th><td>';
+            echo '<input type="checkbox" name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][category_products_sections][' . intval( $i ) . '][showViewAll]" value="1" ' . checked( isset( $cp['showViewAll'] ) && $cp['showViewAll'], true, false ) . ' /></td></tr>';
+
+            // Filter: On Sale Only
+            echo '<tr><th scope="row"><label>' . esc_html__( 'Show On-Sale Products Only', 'ngw-commerce-settings' ) . '</label></th><td>';
+            echo '<input type="checkbox" name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][category_products_sections][' . intval( $i ) . '][showOnSaleOnly]" value="1" ' . checked( isset( $cp['showOnSaleOnly'] ) && $cp['showOnSaleOnly'], true, false ) . ' /></td></tr>';
+
+            // Filter: Featured Only
+            echo '<tr><th scope="row"><label>' . esc_html__( 'Show Featured Products Only', 'ngw-commerce-settings' ) . '</label></th><td>';
+            echo '<input type="checkbox" name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][category_products_sections][' . intval( $i ) . '][showFeaturedOnly]" value="1" ' . checked( isset( $cp['showFeaturedOnly'] ) && $cp['showFeaturedOnly'], true, false ) . ' /></td></tr>';
+
+            echo '</table>';
+            echo '</div>'; // .ngwcs-section-fields
+            echo '</div>'; // .ngwcs-accordion-content
+            echo '</div>'; // .ngwcs-cp-section
+        }
+        echo '</div>'; // .ngwcs-cp-sections
+
+        // Add Section button
+        echo '<p style="margin-top:16px;">';
+        echo '<button type="button" class="button button-primary ngwcs-add-cp-section">';
+        echo '<span class="dashicons dashicons-plus-alt" style="margin-top:3px;"></span> ';
+        echo esc_html__( 'Add Category Products Section', 'ngw-commerce-settings' );
+        echo '</button>';
+        echo '</p>';
+
+        // Template for new sections (hidden, non-submitting)
+        echo '<script type="text/template" id="ngwcs-cp-template">';
+        echo '<div class="ngwcs-cp-section ngwcs-accordion-item" data-index="__INDEX__">';
+        echo '<div class="ngwcs-accordion-header" data-state="open">';
+        echo '<button type="button" class="ngwcs-accordion-trigger" aria-expanded="true">';
+        echo '<span class="dashicons dashicons-arrow-down-alt2 ngwcs-accordion-icon"></span>';
+        echo '<span class="ngwcs-section-title">' . esc_html__( 'New Category Section', 'ngw-commerce-settings' ) . '</span>';
+        echo '<span class="ngwcs-section-meta">' . esc_html__( 'Section', 'ngw-commerce-settings' ) . ' #__NUM__</span>';
+        echo '</button>';
+        echo '<button type="button" class="button button-link-delete ngwcs-remove-cp-section" aria-label="' . esc_attr__( 'Remove this section', 'ngw-commerce-settings' ) . '">';
+        echo '<span class="dashicons dashicons-trash"></span>';
+        echo '</button>';
+        echo '</div>';
+        echo '<div class="ngwcs-accordion-content">';
+        echo '<div class="ngwcs-section-fields">';
+        echo '<table class="form-table" role="presentation">';
+        // Category ID
+        echo '<tr><th scope="row"><label>' . esc_html__( 'Category ID', 'ngw-commerce-settings' ) . '</label></th><td>';
+        echo '<input type="number" name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][category_products_sections][__INDEX__][categoryId]" value="22" min="1" />';
+        echo '<p class="description">' . esc_html__( 'WooCommerce category ID to display products from', 'ngw-commerce-settings' ) . '</p>';
+        echo '</td></tr>';
+        // Display Style
+        echo '<tr><th scope="row"><label>' . esc_html__( 'Display Style', 'ngw-commerce-settings' ) . '</label></th><td>';
+        echo '<select name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][category_products_sections][__INDEX__][displayStyle]"><option value="carousel">Carousel</option><option value="grid">Grid</option><option value="list">List</option></select>';
+        echo '</td></tr>';
+        // Limit
+        echo '<tr><th scope="row"><label>' . esc_html__( 'Products Limit', 'ngw-commerce-settings' ) . '</label></th><td>';
+        echo '<input type="number" name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][category_products_sections][__INDEX__][limit]" value="8" min="1" max="50" />';
+        echo '</td></tr>';
+        // Carousel Autoplay
+        echo '<tr><th scope="row"><label>' . esc_html__( 'Carousel Autoplay', 'ngw-commerce-settings' ) . '</label></th><td>';
+        echo '<input type="checkbox" name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][category_products_sections][__INDEX__][carouselAutoplay]" value="1" />';
+        echo '</td></tr>';
+        // Carousel Delay
+        echo '<tr><th scope="row"><label>' . esc_html__( 'Carousel Delay (ms)', 'ngw-commerce-settings' ) . '</label></th><td>';
+        echo '<input type="number" name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][category_products_sections][__INDEX__][carouselDelay]" value="3000" min="1000" max="10000" step="500" />';
+        echo '</td></tr>';
+        // Carousel Loop
+        echo '<tr><th scope="row"><label>' . esc_html__( 'Carousel Loop', 'ngw-commerce-settings' ) . '</label></th><td>';
+        echo '<input type="checkbox" name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][category_products_sections][__INDEX__][carouselLoop]" value="1" checked />';
+        echo '</td></tr>';
+        // Carousel Slides Per View
+        echo '<tr><th scope="row"><label>' . esc_html__( 'Carousel Slides Per View', 'ngw-commerce-settings' ) . '</label></th><td>';
+        echo '<input type="number" name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][category_products_sections][__INDEX__][carouselSlidesPerView]" value="4" min="1" max="8" />';
+        echo '</td></tr>';
+        // Carousel Space Between
+        echo '<tr><th scope="row"><label>' . esc_html__( 'Carousel Space Between (px)', 'ngw-commerce-settings' ) . '</label></th><td>';
+        echo '<input type="number" name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][category_products_sections][__INDEX__][carouselSpaceBetween]" value="20" min="0" max="60" />';
+        echo '</td></tr>';
+        // Grid Columns
+        echo '<tr><th scope="row"><label>' . esc_html__( 'Grid Columns', 'ngw-commerce-settings' ) . '</label></th><td>';
+        echo '<input type="number" name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][category_products_sections][__INDEX__][gridColumns]" value="4" min="1" max="6" />';
+        echo '</td></tr>';
+        // Sort By
+        echo '<tr><th scope="row"><label>' . esc_html__( 'Sort By', 'ngw-commerce-settings' ) . '</label></th><td>';
+        echo '<select name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][category_products_sections][__INDEX__][sortBy]"><option value="date">Date</option><option value="popularity">Popularity</option><option value="rating">Rating</option><option value="price">Price</option></select>';
+        echo '</td></tr>';
+        // Sort Order
+        echo '<tr><th scope="row"><label>' . esc_html__( 'Sort Order', 'ngw-commerce-settings' ) . '</label></th><td>';
+        echo '<select name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][category_products_sections][__INDEX__][sortOrder]"><option value="desc">Descending</option><option value="asc">Ascending</option></select>';
+        echo '</td></tr>';
+        // Show View All
+        echo '<tr><th scope="row"><label>' . esc_html__( 'Show View All Button', 'ngw-commerce-settings' ) . '</label></th><td>';
+        echo '<input type="checkbox" name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][category_products_sections][__INDEX__][showViewAll]" value="1" checked />';
+        echo '</td></tr>';
+        // Filter: On Sale Only
+        echo '<tr><th scope="row"><label>' . esc_html__( 'Show On-Sale Products Only', 'ngw-commerce-settings' ) . '</label></th><td>';
+        echo '<input type="checkbox" name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][category_products_sections][__INDEX__][showOnSaleOnly]" value="1" />';
+        echo '</td></tr>';
+        // Filter: Featured Only
+        echo '<tr><th scope="row"><label>' . esc_html__( 'Show Featured Products Only', 'ngw-commerce-settings' ) . '</label></th><td>';
+        echo '<input type="checkbox" name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][category_products_sections][__INDEX__][showFeaturedOnly]" value="1" />';
+        echo '</td></tr>';
+        echo '</table>';
+        echo '</script>';
+        echo '</div>';
+        
+        // Categories Display Settings
+        echo '<h3 style="margin-top:30px;">' . esc_html__( 'Categories Display Component', 'ngw-commerce-settings' ) . '</h3>';
+        echo '<table class="form-table" role="presentation">';
+        
+        // Display Style
+        echo '<tr><th scope="row"><label>' . esc_html__( 'Display Style', 'ngw-commerce-settings' ) . '</label></th><td>';
+        echo '<select name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][categories_display][displayStyle]">';
+        $cd_display_styles = array( 'flat-list' => 'Flat List', 'masonry-grid' => 'Masonry Grid', 'carousel' => 'Carousel' );
+        foreach ( $cd_display_styles as $value => $label ) {
+            $selected = ( isset( $cd['displayStyle'] ) && $cd['displayStyle'] === $value ) ? 'selected' : '';
+            echo '<option value="' . esc_attr( $value ) . '" ' . $selected . '>' . esc_html( $label ) . '</option>';
+        }
+        echo '</select></td></tr>';
+        
+        // Size
+        echo '<tr><th scope="row"><label>' . esc_html__( 'Category Icon Size', 'ngw-commerce-settings' ) . '</label></th><td>';
+        echo '<select name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][categories_display][size]">';
+        $size_options = array( 'sm' => 'Small', 'md' => 'Medium', 'lg' => 'Large', 'xl' => 'Extra Large' );
+        foreach ( $size_options as $value => $label ) {
+            $selected = ( isset( $cd['size'] ) && $cd['size'] === $value ) ? 'selected' : '';
+            echo '<option value="' . esc_attr( $value ) . '" ' . $selected . '>' . esc_html( $label ) . '</option>';
+        }
+        echo '</select></td></tr>';
+        
+        // Show Title
+        echo '<tr><th scope="row"><label>' . esc_html__( 'Show Title', 'ngw-commerce-settings' ) . '</label></th><td>';
+        echo '<input type="checkbox" name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][categories_display][showTitle]" value="1" ' . checked( isset( $cd['showTitle'] ) && $cd['showTitle'], true, false ) . ' /></td></tr>';
+        
+        // Show View All
+        echo '<tr><th scope="row"><label>' . esc_html__( 'Show View All Button', 'ngw-commerce-settings' ) . '</label></th><td>';
+        echo '<input type="checkbox" name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][categories_display][showViewAll]" value="1" ' . checked( isset( $cd['showViewAll'] ) && $cd['showViewAll'], true, false ) . ' /></td></tr>';
+        
+        // Enable Hover
+        echo '<tr><th scope="row"><label>' . esc_html__( 'Enable Hover Effects', 'ngw-commerce-settings' ) . '</label></th><td>';
+        echo '<input type="checkbox" name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][categories_display][enableHover]" value="1" ' . checked( isset( $cd['enableHover'] ) && $cd['enableHover'], true, false ) . ' /></td></tr>';
+        
+        // Card Style
+        echo '<tr><th scope="row"><label>' . esc_html__( 'Card Style', 'ngw-commerce-settings' ) . '</label></th><td>';
+        echo '<select name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][categories_display][cardStyle]">';
+        $card_styles = array( 'minimal' => 'Minimal', 'elevated' => 'Elevated', 'bordered' => 'Bordered' );
+        foreach ( $card_styles as $value => $label ) {
+            $selected = ( isset( $cd['cardStyle'] ) && $cd['cardStyle'] === $value ) ? 'selected' : '';
+            echo '<option value="' . esc_attr( $value ) . '" ' . $selected . '>' . esc_html( $label ) . '</option>';
+        }
+        echo '</select></td></tr>';
+        
+        echo '</table>';
+        echo '</div>';
     }
 }

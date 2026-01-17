@@ -26,6 +26,48 @@ export interface CommerceSettingsResponse {
   cache_version: number;
   updated_at: string;
   schema_version?: number; // used to force refetch when structure changes
+  component_settings?: ComponentSettings;
+}
+
+// Component settings interfaces
+export interface CategoryProductsConfig {
+  categoryId?: number;
+  displayStyle: 'carousel' | 'grid' | 'list';
+  limit: number;
+  carouselAutoplay: boolean;
+  carouselDelay: number;
+  carouselLoop: boolean;
+  carouselSlidesPerView: number;
+  carouselSpaceBetween: number;
+  gridColumns: number;
+  sortBy: 'date' | 'popularity' | 'rating' | 'price';
+  sortOrder: 'asc' | 'desc';
+  showViewAll: boolean;
+  showOnSaleOnly: boolean;
+  showFeaturedOnly: boolean;
+}
+
+export interface CategoriesDisplayConfig {
+  displayStyle: 'flat-list' | 'masonry-grid' | 'carousel';
+  size: 'sm' | 'md' | 'lg' | 'xl';
+  showTitle: boolean;
+  showViewAll: boolean;
+  showCount: boolean;
+  enableHover: boolean;
+  cardStyle: 'minimal' | 'elevated' | 'bordered';
+  gridColumns: { mobile: number; tablet: number; desktop: number };
+  gridGap: number;
+  carouselSlidesPerView: string | number;
+  carouselSpaceBetween: number;
+  carouselLoop: boolean;
+  carouselAutoplay: boolean;
+  carouselNavigation: boolean;
+  carouselPagination: boolean;
+}
+
+export interface ComponentSettings {
+  category_products_sections?: CategoryProductsConfig[];
+  categories_display?: CategoriesDisplayConfig;
 }
 
 export interface HeroBannerSlide {
@@ -154,5 +196,73 @@ export class CommerceSettingsService {
         currencySymbol
       };
     });
+  }
+
+  /** Get array of category products sections from WordPress settings */
+  getCategoryProductsSections(): CategoryProductsConfig[] {
+    if (!this.settingsCache || !this.settingsCache.component_settings) {
+      return [];
+    }
+    const comp = this.settingsCache.component_settings as any;
+    // Preferred: array of sections
+    if (Array.isArray(comp.category_products_sections) && comp.category_products_sections.length) {
+      return comp.category_products_sections.map((s: any) => this.normalizeCategorySection(s));
+    }
+    // Handle object-form sections (from WP options serialization with keyed indices)
+    if (comp.category_products_sections && typeof comp.category_products_sections === 'object') {
+      const obj = comp.category_products_sections as Record<string, any>;
+      const keys = Object.keys(obj).filter(k => k !== '__INDEX__');
+      // Sort numeric-like keys ascending to preserve visual order
+      keys.sort((a,b) => (parseInt(a,10)||0) - (parseInt(b,10)||0));
+      const normalized = keys.map(k => this.normalizeCategorySection(obj[k]))
+        .filter(s => (s.categoryId ?? 0) > 0);
+      if (normalized.length) return normalized;
+    }
+    // Fallback (legacy): single object under `category_products`
+    if (comp.category_products && typeof comp.category_products === 'object') {
+      return [this.normalizeCategorySection(comp.category_products)];
+    }
+    return [];
+  }
+
+  /** Get categories display configuration from WordPress settings */
+  getCategoriesDisplayConfig(): CategoriesDisplayConfig | null {
+    if (!this.settingsCache || !this.settingsCache.component_settings) {
+      return null;
+    }
+    return this.settingsCache.component_settings.categories_display || null;
+  }
+
+  /** Normalize section values coming from WordPress (strings -> numbers/booleans) */
+  private normalizeCategorySection(raw: any): CategoryProductsConfig {
+    const toNum = (v: any, def: number) => {
+      const n = Number(v);
+      return Number.isFinite(n) && !Number.isNaN(n) ? n : def;
+    };
+    const toBool = (v: any, def: boolean) => {
+      if (typeof v === 'boolean') return v;
+      if (v === '1' || v === 1) return true;
+      if (v === '0' || v === 0) return false;
+      return def;
+    };
+    const display = ['carousel','grid','list'].includes(raw?.displayStyle) ? raw.displayStyle : 'grid';
+    const sortBy = ['date','popularity','rating','price'].includes(raw?.sortBy) ? raw.sortBy : 'date';
+    const sortOrder: 'asc' | 'desc' = raw?.sortOrder === 'asc' ? 'asc' : 'desc';
+    return {
+      categoryId: toNum(raw?.categoryId, 0),
+      displayStyle: display,
+      limit: toNum(raw?.limit, 8),
+      carouselAutoplay: toBool(raw?.carouselAutoplay, false),
+      carouselDelay: toNum(raw?.carouselDelay, 3000),
+      carouselLoop: toBool(raw?.carouselLoop, true),
+      carouselSlidesPerView: toNum(raw?.carouselSlidesPerView, 4),
+      carouselSpaceBetween: toNum(raw?.carouselSpaceBetween, 20),
+      gridColumns: toNum(raw?.gridColumns, 4),
+      sortBy,
+      sortOrder,
+      showViewAll: toBool(raw?.showViewAll, true),
+      showOnSaleOnly: toBool(raw?.showOnSaleOnly, false),
+      showFeaturedOnly: toBool(raw?.showFeaturedOnly, false)
+    };
   }
 }
