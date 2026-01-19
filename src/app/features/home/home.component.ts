@@ -33,16 +33,9 @@ export class HomeComponent implements OnInit {
   // Category products sections from WordPress
   categoryProductsSections: any[] = [];
 
-  // Top Categories
-  topCategories: CategoryDisplay[] = [
-    { id: 1, name: 'Mobile', slug: 'mobile', icon: 'fa-mobile-alt' },
-    { id: 2, name: 'Cosmetics', slug: 'cosmetics', icon: 'fa-pump-soap' },
-    { id: 3, name: 'Electronics', slug: 'electronics', icon: 'fa-tv' },
-    { id: 4, name: 'Furniture', slug: 'furniture', icon: 'fa-couch' },
-    { id: 5, name: 'Watches', slug: 'watches', icon: 'fa-clock' },
-    { id: 6, name: 'Decor', slug: 'decor', icon: 'fa-leaf' },
-    { id: 7, name: 'Accessories', slug: 'accessories', icon: 'fa-gem' }
-  ];
+  // Top Categories - will be loaded from WordPress
+  topCategories: CategoryDisplay[] = [];
+  topCategoriesLoading = true;
 
   // Electronics Brands
   electronicsBrands: BrandShowcase[] = [
@@ -92,7 +85,34 @@ export class HomeComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadHeroSlides();
+    this.loadTopCategories();
   }
+
+  private loadTopCategories(): void {
+    this.topCategoriesLoading = true;
+    this.settingsService.fetchTopCategories(10)
+      .pipe(finalize(() => this.topCategoriesLoading = false))
+      .subscribe({
+        next: categories => {
+          this.topCategories = categories;
+          console.log('[HomeComponent] Top Categories loaded:', categories.length, 'categories');
+        },
+        error: err => {
+          console.error('[HomeComponent] Failed to load top categories', err);
+          // Fallback to hardcoded categories if API fails
+          this.topCategories = [
+            { id: 1, name: 'Mobile', slug: 'mobile', icon: 'fa-mobile-alt' },
+            { id: 2, name: 'Cosmetics', slug: 'cosmetics', icon: 'fa-pump-soap' },
+            { id: 3, name: 'Electronics', slug: 'electronics', icon: 'fa-tv' },
+            { id: 4, name: 'Furniture', slug: 'furniture', icon: 'fa-couch' },
+            { id: 5, name: 'Watches', slug: 'watches', icon: 'fa-clock' },
+            { id: 6, name: 'Decor', slug: 'decor', icon: 'fa-leaf' },
+            { id: 7, name: 'Accessories', slug: 'accessories', icon: 'fa-gem' }
+          ];
+        }
+      });
+  }
+
   private loadHeroSlides(): void {
     this.heroLoading = true;
     this.heroError = null;

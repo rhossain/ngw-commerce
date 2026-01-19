@@ -70,6 +70,16 @@ export interface ComponentSettings {
   categories_display?: CategoriesDisplayConfig;
 }
 
+// Category interface for categories endpoint
+export interface WPCategory {
+  id: number;
+  name: string;
+  slug: string;
+  count: number;
+  imageUrl?: string | null;
+  link: string;
+}
+
 export interface HeroBannerSlide {
   id: string; // Use product id as string for compatibility
   title: string;
@@ -230,7 +240,86 @@ export class CommerceSettingsService {
     if (!this.settingsCache || !this.settingsCache.component_settings) {
       return null;
     }
-    return this.settingsCache.component_settings.categories_display || null;
+    const raw = this.settingsCache.component_settings.categories_display;
+    if (!raw) {
+      return null;
+    }
+    return this.normalizeCategoriesDisplayConfig(raw);
+  }
+
+  /** Fetch top categories from WordPress */
+  fetchTopCategories(perPage: number = 10): Observable<any[]> {
+    const params = { per_page: perPage, hide_empty: true, orderby: 'count', order: 'DESC' };
+    return this.http.get<WPCategory[]>(`${environment.apiUrl}/ngw/v1/categories`, { params })
+      .pipe(
+        map(categories => categories.map(cat => ({
+          id: cat.id,
+          name: cat.name,
+          slug: cat.slug,
+          count: cat.count,
+          imageUrl: cat.imageUrl,
+          link: `/products?category=${cat.slug}`
+        }))),
+        catchError(err => {
+          console.error('[CommerceSettingsService] Failed to fetch categories', err);
+          return throwError(() => err);
+        })
+      );
+  }
+
+  /** Normalize categories display config values (strings -> proper types) */
+  private normalizeCategoriesDisplayConfig(raw: any): CategoriesDisplayConfig {
+    const toNum = (v: any, def: number) => {
+      const n = Number(v);
+      return Number.isFinite(n) && !Number.isNaN(n) ? n : def;
+    };
+    const toBool = (v: any, def: boolean) => {
+      if (typeof v === 'boolean') return v;
+      if (v === '1' || v === 1) return true;
+      if (v === '0' || v === 0) return false;
+      return def;
+    };
+    
+    const displayStyle = ['flat-list', 'masonry-grid', 'carousel'].includes(raw?.displayStyle) 
+      ? raw.displayStyle : 'flat-list';
+    const size = ['sm', 'md', 'lg', 'xl'].includes(raw?.size) ? raw.size : 'md';
+    const cardStyle = ['minimal', 'elevated', 'bordered'].includes(raw?.cardStyle) 
+      ? raw.cardStyle : 'elevated';
+    
+    // Handle gridColumns (can be object with string values)
+    const gridCols = raw?.gridColumns || {};
+    const gridColumns = {
+      mobile: toNum(gridCols.mobile, 3),
+      tablet: toNum(gridCols.tablet, 4),
+      desktop: toNum(gridCols.desktop, 7)
+    };
+    
+    // Handle carouselSlidesPerView (can be 'auto' or number)
+    let carouselSlidesPerView: string | number = 'auto';
+    if (raw?.carouselSlidesPerView === 'auto') {
+      carouselSlidesPerView = 'auto';
+    } else if (raw?.carouselSlidesPerView) {
+      const num = toNum(raw.carouselSlidesPerView, 0);
+      carouselSlidesPerView = num > 0 ? num : 'auto';
+    }
+    
+    return {
+      displayStyle,
+      size,
+      showTitle: toBool(raw?.showTitle, true),
+      showViewAll: toBool(raw?.showViewAll, true),
+      showCount: toBool(raw?.showCount, false),
+      enableHover: toBool(raw?.enableHover, true),
+      cardStyle,
+      gridColumns,
+      gridGap: toNum(raw?.gridGap, 24),
+      carouselSlidesPerView,
+      carouselSpaceBetween: toNum(raw?.carouselSpaceBetween, 20),
+      carouselLoop: toBool(raw?.carouselLoop, false),
+      carouselAutoplay: toBool(raw?.carouselAutoplay, false),
+      carouselNavigation: toBool(raw?.carouselNavigation, true),
+      carouselPagination: toBool(raw?.carouselPagination, true)
+    };
   }
 
   /** Normalize section values coming from WordPress (strings -> numbers/booleans) */

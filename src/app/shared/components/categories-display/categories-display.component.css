@@ -1,5 +1,6 @@
 /* ===================================
    Categories Display Component Styles
+   Modern & Furnished Design
    =================================== */
 
 /* Base Container */
@@ -9,133 +10,338 @@
 }
 
 /* ===================================
-   Flat List Style
+   Flat List Style - Modern Circular Icons
    =================================== */
 
 .category-item {
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
 }
 
 .category-item.category-hover:hover {
-  transform: translateY(-8px);
+  transform: translateY(-12px);
 }
 
+/* Modern circular icon container with gradient border */
 .category-item .rounded-full {
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.category-item .rounded-full::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(135deg, #06b6d4, #3b82f6, #8b5cf6);
+  border-radius: 50%;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.4s ease;
 }
 
 .category-item:hover .rounded-full {
-  transform: scale(1.1);
-  box-shadow: 0 15px 30px rgba(6, 182, 212, 0.3);
+  transform: scale(1.15) rotate(5deg);
+  box-shadow: 0 20px 40px rgba(6, 182, 212, 0.4),
+              0 0 0 8px rgba(6, 182, 212, 0.1);
 }
 
-/* Icon animations */
+.category-item:hover .rounded-full::before {
+  opacity: 1;
+}
+
+/* Icon animations with bounce */
 .category-item i {
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
 
 .category-item:hover i {
-  transform: scale(1.1);
+  transform: scale(1.2) rotate(-5deg);
+  filter: drop-shadow(0 4px 8px rgba(6, 182, 212, 0.4));
+}
+
+/* Category name styling */
+.category-item p {
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.category-item:hover p {
+  color: #06b6d4;
+  transform: scale(1.05);
+  font-weight: 600;
 }
 
 /* ===================================
-   Masonry Grid Style
+   Masonry Grid Style - Luxury Cards
    =================================== */
 
-/* Card hover effects */
+/* Enhanced card with modern glass effect */
 .category-hover {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
+  backdrop-filter: blur(10px);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(249, 250, 251, 0.9) 100%);
+  border: 1px solid rgba(6, 182, 212, 0.1);
 }
 
 .category-hover:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 25px 50px rgba(6, 182, 212, 0.2),
+              0 10px 20px rgba(0, 0, 0, 0.1),
+              inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  border-color: rgba(6, 182, 212, 0.3);
 }
 
-/* Image hover effects */
+/* Image hover effects with parallax */
 .category-hover img {
-  transition: transform 0.4s ease;
+  transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .category-hover:hover img {
-  transform: scale(1.1);
+  transform: scale(1.15) rotate(2deg);
 }
 
-/* Arrow icon reveal */
+/* Arrow icon reveal with slide */
 .category-hover .fa-arrow-right {
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .category-hover:hover .fa-arrow-right {
   opacity: 1 !important;
-  transform: translateX(4px);
+  transform: translateX(6px) rotate(-45deg);
 }
 
-/* Gradient overlays for cards */
+/* Gradient overlays with shimmer effect */
 .category-hover::before {
   content: '';
   position: absolute;
   top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(6, 182, 212, 0.05), rgba(59, 130, 246, 0.05));
-  opacity: 0;
-  transition: opacity 0.3s ease;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(6, 182, 212, 0.1),
+    transparent
+  );
+  transition: left 0.6s ease;
   pointer-events: none;
+  z-index: 1;
 }
 
 .category-hover:hover::before {
-  opacity: 1;
+  left: 100%;
+}
+
+/* Colored accent bar */
+.category-hover::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #06b6d4, #3b82f6, #8b5cf6);
+  transition: width 0.4s ease;
+  z-index: 2;
+}
+
+.category-hover:hover::after {
+  width: 100%;
 }
 
 /* ===================================
-   Carousel Style (Swiper)
+   Carousel Style (Swiper) - Premium Look
    =================================== */
 
 .categories-carousel {
-  padding: 0 4px;
+  padding: 8px 4px 40px;
+  position: relative;
 }
 
-/* Swiper navigation buttons */
+.categories-carousel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -5%;
+  right: -5%;
+  bottom: 0;
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    rgba(6, 182, 212, 0.02) 50%,
+    transparent 100%
+  );
+  pointer-events: none;
+  border-radius: 16px;
+}
+
+/* Modern swiper navigation buttons */
 .categories-swiper::part(button-prev),
 .categories-swiper::part(button-next) {
-  width: 40px;
-  height: 40px;
-  background: white;
-  border-radius: 50%;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08),
+              0 2px 8px rgba(6, 182, 212, 0.1),
+              inset 0 1px 0 rgba(255, 255, 255, 0.6);
   color: #06b6d4;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border: 1px solid rgba(6, 182, 212, 0.1);
 }
 
 .categories-swiper::part(button-prev):hover,
 .categories-swiper::part(button-next):hover {
-  background: #06b6d4;
+  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
   color: white;
-  transform: scale(1.1);
+  transform: scale(1.15);
+  box-shadow: 0 8px 24px rgba(6, 182, 212, 0.3),
+              0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: #0891b2;
 }
 
 .categories-swiper::part(button-prev)::after,
 .categories-swiper::part(button-next)::after {
-  font-size: 16px;
-  font-weight: bold;
+  font-size: 18px;
+  font-weight: 900;
 }
 
-/* Swiper pagination */
+.categories-swiper::part(button-prev):active,
+.categories-swiper::part(button-next):active {
+  transform: scale(1.05);
+}
+
+/* Gradient pagination dots */
 .categories-swiper::part(pagination) {
-  bottom: -30px;
+  bottom: -32px;
 }
 
 .categories-swiper::part(bullet) {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   background: #d1d5db;
-  opacity: 1;
+  opacity: 0.5;
   transition: all 0.3s ease;
+  border-radius: 5px;
 }
+
+.categories-swiper::part(bullet-active) {
+  width: 28px;
+  background: linear-gradient(90deg, #06b6d4, #3b82f6);
+  opacity: 1;
+  box-shadow: 0 2px 8px rgba(6, 182, 212, 0.4);
+}
+
+/* Carousel slide styling */
+.categories-carousel swiper-slide {
+  height: auto;
+  display: flex;
+  align-items: stretch;
+}
+
+/* ===================================
+   Responsive & Mobile Optimizations
+   =================================== */
+
+@media (max-width: 640px) {
+  .category-item {
+    transition: all 0.3s ease;
+  }
+  
+  .category-item:hover {
+    transform: translateY(-6px);
+  }
+  
+  .category-hover {
+    padding: 1rem;
+  }
+  
+  .categories-swiper::part(button-prev),
+  .categories-swiper::part(button-next) {
+    width: 36px;
+    height: 36px;
+  }
+}
+
+/* ===================================
+   Accessibility & Focus States
+   =================================== */
+
+.category-item:focus-visible,
+.category-hover:focus-visible {
+  outline: 3px solid #06b6d4;
+  outline-offset: 4px;
+  border-radius: 12px;
+}
+
+/* ===================================
+   Loading & Skeleton States
+   =================================== */
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.category-skeleton {
+  background: linear-gradient(
+    90deg,
+    #f0f0f0 25%,
+    #e0e0e0 50%,
+    #f0f0f0 75%
+  );
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* ===================================
+   Print Styles
+   =================================== */
+
+@media print {
+  .category-item,
+  .category-hover {
+    break-inside: avoid;
+  }
+  
+  .categories-swiper::part(button-prev),
+  .categories-swiper::part(button-next),
+  .categories-swiper::part(pagination) {
+    display: none;
+  }
+}
+
+/* ===================================
+   Dark Mode Support (if enabled)
+   =================================== */
+
+@media (prefers-color-scheme: dark) {
+  .category-item .rounded-full {
+    background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+  }
+  
+  .category-hover {
+    background: linear-gradient(135deg, rgba(31, 41, 55, 0.95) 0%, rgba(17, 24, 39, 0.9) 100%);
+    border-color: rgba(6, 182, 212, 0.2);
+  }
+}
+
+/* ===================================
+   Legacy Styles (kept for compatibility)
+   =================================== */
 
 .categories-swiper::part(bullet-active) {
   width: 24px;

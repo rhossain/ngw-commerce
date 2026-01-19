@@ -573,6 +573,11 @@ class NGWCS_Admin {
         echo '<tr><th scope="row"><label>' . esc_html__( 'Show View All Button', 'ngw-commerce-settings' ) . '</label></th><td>';
         echo '<input type="checkbox" name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][categories_display][showViewAll]" value="1" ' . checked( isset( $cd['showViewAll'] ) && $cd['showViewAll'], true, false ) . ' /></td></tr>';
         
+        // Show Count
+        echo '<tr><th scope="row"><label>' . esc_html__( 'Show Product Count', 'ngw-commerce-settings' ) . '</label></th><td>';
+        echo '<input type="checkbox" name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][categories_display][showCount]" value="1" ' . checked( isset( $cd['showCount'] ) && $cd['showCount'], true, false ) . ' />';
+        echo '<p class="description">' . esc_html__( 'Display product count badge on category items', 'ngw-commerce-settings' ) . '</p></td></tr>';
+        
         // Enable Hover
         echo '<tr><th scope="row"><label>' . esc_html__( 'Enable Hover Effects', 'ngw-commerce-settings' ) . '</label></th><td>';
         echo '<input type="checkbox" name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][categories_display][enableHover]" value="1" ' . checked( isset( $cd['enableHover'] ) && $cd['enableHover'], true, false ) . ' /></td></tr>';
@@ -585,7 +590,66 @@ class NGWCS_Admin {
             $selected = ( isset( $cd['cardStyle'] ) && $cd['cardStyle'] === $value ) ? 'selected' : '';
             echo '<option value="' . esc_attr( $value ) . '" ' . $selected . '>' . esc_html( $label ) . '</option>';
         }
-        echo '</select></td></tr>';
+        echo '</select>';
+        echo '<p class="description">' . esc_html__( 'Visual style for masonry-grid display mode', 'ngw-commerce-settings' ) . '</p></td></tr>';
+        
+        // Grid Settings
+        echo '<tr><th colspan="2" style="padding-top:20px;"><h4 style="margin:0;">' . esc_html__( 'Grid Settings', 'ngw-commerce-settings' ) . '</h4></th></tr>';
+        
+        $grid_cols = isset( $cd['gridColumns'] ) && is_array( $cd['gridColumns'] ) ? $cd['gridColumns'] : array( 'mobile' => 3, 'tablet' => 4, 'desktop' => 7 );
+        
+        // Grid Columns - Mobile
+        echo '<tr><th scope="row"><label>' . esc_html__( 'Grid Columns (Mobile)', 'ngw-commerce-settings' ) . '</label></th><td>';
+        echo '<input type="number" name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][categories_display][gridColumns][mobile]" value="' . esc_attr( $grid_cols['mobile'] ?? 3 ) . '" min="1" max="6" style="width:80px;" />';
+        echo '<p class="description">' . esc_html__( 'Number of columns on mobile devices (< 640px)', 'ngw-commerce-settings' ) . '</p></td></tr>';
+        
+        // Grid Columns - Tablet
+        echo '<tr><th scope="row"><label>' . esc_html__( 'Grid Columns (Tablet)', 'ngw-commerce-settings' ) . '</label></th><td>';
+        echo '<input type="number" name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][categories_display][gridColumns][tablet]" value="' . esc_attr( $grid_cols['tablet'] ?? 4 ) . '" min="1" max="8" style="width:80px;" />';
+        echo '<p class="description">' . esc_html__( 'Number of columns on tablet devices (640px - 1024px)', 'ngw-commerce-settings' ) . '</p></td></tr>';
+        
+        // Grid Columns - Desktop
+        echo '<tr><th scope="row"><label>' . esc_html__( 'Grid Columns (Desktop)', 'ngw-commerce-settings' ) . '</label></th><td>';
+        echo '<input type="number" name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][categories_display][gridColumns][desktop]" value="' . esc_attr( $grid_cols['desktop'] ?? 7 ) . '" min="1" max="12" style="width:80px;" />';
+        echo '<p class="description">' . esc_html__( 'Number of columns on desktop devices (> 1024px)', 'ngw-commerce-settings' ) . '</p></td></tr>';
+        
+        // Grid Gap
+        echo '<tr><th scope="row"><label>' . esc_html__( 'Grid Gap (px)', 'ngw-commerce-settings' ) . '</label></th><td>';
+        echo '<input type="number" name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][categories_display][gridGap]" value="' . esc_attr( isset( $cd['gridGap'] ) ? $cd['gridGap'] : 24 ) . '" min="0" max="100" style="width:80px;" />';
+        echo '<p class="description">' . esc_html__( 'Space between grid items in pixels', 'ngw-commerce-settings' ) . '</p></td></tr>';
+        
+        // Carousel Settings
+        echo '<tr><th colspan="2" style="padding-top:20px;"><h4 style="margin:0;">' . esc_html__( 'Carousel Settings', 'ngw-commerce-settings' ) . '</h4></th></tr>';
+        
+        // Carousel Slides Per View
+        echo '<tr><th scope="row"><label>' . esc_html__( 'Slides Per View', 'ngw-commerce-settings' ) . '</label></th><td>';
+        echo '<input type="text" name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][categories_display][carouselSlidesPerView]" value="' . esc_attr( isset( $cd['carouselSlidesPerView'] ) ? $cd['carouselSlidesPerView'] : 'auto' ) . '" style="width:120px;" />';
+        echo '<p class="description">' . esc_html__( 'Number of slides visible at once, or "auto" for automatic sizing', 'ngw-commerce-settings' ) . '</p></td></tr>';
+        
+        // Carousel Space Between
+        echo '<tr><th scope="row"><label>' . esc_html__( 'Space Between Slides (px)', 'ngw-commerce-settings' ) . '</label></th><td>';
+        echo '<input type="number" name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][categories_display][carouselSpaceBetween]" value="' . esc_attr( isset( $cd['carouselSpaceBetween'] ) ? $cd['carouselSpaceBetween'] : 20 ) . '" min="0" max="100" style="width:80px;" />';
+        echo '<p class="description">' . esc_html__( 'Space between carousel slides in pixels', 'ngw-commerce-settings' ) . '</p></td></tr>';
+        
+        // Carousel Loop
+        echo '<tr><th scope="row"><label>' . esc_html__( 'Enable Loop', 'ngw-commerce-settings' ) . '</label></th><td>';
+        echo '<input type="checkbox" name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][categories_display][carouselLoop]" value="1" ' . checked( isset( $cd['carouselLoop'] ) && $cd['carouselLoop'], true, false ) . ' />';
+        echo '<p class="description">' . esc_html__( 'Loop carousel slides continuously', 'ngw-commerce-settings' ) . '</p></td></tr>';
+        
+        // Carousel Autoplay
+        echo '<tr><th scope="row"><label>' . esc_html__( 'Enable Autoplay', 'ngw-commerce-settings' ) . '</label></th><td>';
+        echo '<input type="checkbox" name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][categories_display][carouselAutoplay]" value="1" ' . checked( isset( $cd['carouselAutoplay'] ) && $cd['carouselAutoplay'], true, false ) . ' />';
+        echo '<p class="description">' . esc_html__( 'Automatically advance carousel slides', 'ngw-commerce-settings' ) . '</p></td></tr>';
+        
+        // Carousel Navigation
+        echo '<tr><th scope="row"><label>' . esc_html__( 'Show Navigation Arrows', 'ngw-commerce-settings' ) . '</label></th><td>';
+        echo '<input type="checkbox" name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][categories_display][carouselNavigation]" value="1" ' . checked( isset( $cd['carouselNavigation'] ) && $cd['carouselNavigation'], true, false ) . ' />';
+        echo '<p class="description">' . esc_html__( 'Display previous/next navigation arrows', 'ngw-commerce-settings' ) . '</p></td></tr>';
+        
+        // Carousel Pagination
+        echo '<tr><th scope="row"><label>' . esc_html__( 'Show Pagination Dots', 'ngw-commerce-settings' ) . '</label></th><td>';
+        echo '<input type="checkbox" name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][categories_display][carouselPagination]" value="1" ' . checked( isset( $cd['carouselPagination'] ) && $cd['carouselPagination'], true, false ) . ' />';
+        echo '<p class="description">' . esc_html__( 'Display pagination dots below carousel', 'ngw-commerce-settings' ) . '</p></td></tr>';
         
         echo '</table>';
         echo '</div>';

@@ -189,10 +189,23 @@ export class CategoriesDisplayComponent implements OnInit {
    */
   private applyWordPressSettings(): void {
     const config = this.settingsService.getCategoriesDisplayConfig();
+    console.log('[CategoriesDisplayComponent] WordPress settings fetch:', config);
+    
     if (!config) {
       console.warn('[CategoriesDisplayComponent] WordPress settings enabled but no configuration found');
+      console.log('[CategoriesDisplayComponent] Make sure to:');
+      console.log('  1. Save settings in WordPress Admin → NGW Commerce Settings');
+      console.log('  2. Click "Flush Cache" after saving');
+      console.log('  3. Verify API endpoint returns categories_display object');
       return;
     }
+
+    console.log('[CategoriesDisplayComponent] Applying WordPress settings:', {
+      displayStyle: config.displayStyle,
+      size: config.size,
+      gridColumns: config.gridColumns,
+      showCount: config.showCount
+    });
 
     // Apply settings only if not explicitly set (checking against defaults)
     if (this.displayStyle === 'flat-list') this.displayStyle = config.displayStyle;

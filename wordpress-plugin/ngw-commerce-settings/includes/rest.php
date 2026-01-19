@@ -35,7 +35,7 @@ class NGWCS_Rest {
             )
         ) );
 
-        // Search categories
+        // Search categories (admin-only)
         register_rest_route( self::NAMESPACE, '/search/categories', array(
             array(
                 'methods'             => WP_REST_Server::READABLE,
@@ -44,6 +44,21 @@ class NGWCS_Rest {
                 'args'                => array(
                     'q'    => array( 'type' => 'string', 'required' => false ),
                     'page' => array( 'type' => 'integer', 'required' => false ),
+                ),
+            )
+        ) );
+
+        // Get top categories (public)
+        register_rest_route( self::NAMESPACE, '/categories', array(
+            array(
+                'methods'             => WP_REST_Server::READABLE,
+                'callback'            => array( $this, 'get_categories' ),
+                'permission_callback' => '__return_true',
+                'args'                => array(
+                    'per_page'   => array( 'type' => 'integer', 'required' => false, 'default' => 10 ),
+                    'hide_empty' => array( 'type' => 'boolean', 'required' => false, 'default' => true ),
+                    'orderby'    => array( 'type' => 'string', 'required' => false, 'default' => 'count' ),
+                    'order'      => array( 'type' => 'string', 'required' => false, 'default' => 'DESC' ),
                 ),
             )
         ) );
@@ -326,6 +341,50 @@ class NGWCS_Rest {
             'page'       => $page,
             'totalPages' => $total_pages,
         ), 200 );
+    }
+
+    public function get_categories( WP_REST_Request $request ) {
+        $per_page   = min( 50, max( 1, absint( $request->get_param( 'per_page' ) ) ) );
+        $hide_empty = filter_var( $request->get_param( 'hide_empty' ), FILTER_VALIDATE_BOOLEAN );
+        $orderby    = sanitize_text_field( $request->get_param( 'orderby' ) );
+        $order      = strtoupper( sanitize_text_field( $request->get_param( 'order' ) ) );
+
+        if ( ! in_array( $orderby, array( 'name', 'count', 'id', 'slug' ), true ) ) {
+            $orderby = 'count';
+        }
+        if ( ! in_array( $order, array( 'ASC', 'DESC' ), true ) ) {
+            $order = 'DESC';
+        }
+
+        $args = array(
+            'taxonomy'   => 'product_cat',
+            'hide_empty' => $hide_empty,
+            'number'     => $per_page,
+            'orderby'    => $orderby,
+            'order'      => $order,
+        );
+
+        $terms = get_terms( $args );
+        if ( is_wp_error( $terms ) ) {
+            return new WP_Error( 'ngwcs_terms_error', $terms->get_error_message(), array( 'status' => 500 ) );
+        }
+
+        $items = array();
+        foreach ( $terms as $term ) {
+            $thumbnail_id = get_term_meta( $term->term_id, 'thumbnail_id', true );
+            $image_url = $thumbnail_id ? wp_get_attachment_url( $thumbnail_id ) : null;
+            
+            $items[] = array(
+                'id'       => $term->term_id,
+                'name'     => $term->name,
+                'slug'     => $term->slug,
+                'count'    => $term->count,
+                'imageUrl' => $image_url,
+                'link'     => get_term_link( $term ),
+            );
+        }
+
+        return new WP_REST_Response( $items, 200 );
     }
 
     public function list_products( WP_REST_Request $request ) {
