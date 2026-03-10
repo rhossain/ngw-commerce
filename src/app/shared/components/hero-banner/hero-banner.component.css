@@ -168,3 +168,47 @@ span[aria-label]:focus {
     background: linear-gradient(to right, rgba(30,58,138,0), rgba(30,58,138,0.85));
   }
 }
+
+/* ── Hero slide skeleton / shimmer ── */
+.hero-slide-skeleton {
+  background: #1e3a8a;
+  overflow: hidden;
+}
+
+.hero-shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 20%,
+    rgba(255, 255, 255, 0.08) 50%,
+    transparent 80%
+  );
+  background-size: 200% 100%;
+  animation: hero-shimmer-move 1.6s ease-in-out infinite;
+}
+
+@keyframes hero-shimmer-move {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.hero-skeleton-box {
+  background: rgba(255, 255, 255, 0.12);
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-skeleton-box::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 25%,
+    rgba(255, 255, 255, 0.15) 50%,
+    transparent 75%
+  );
+  background-size: 400% 100%;
+  animation: hero-shimmer-move 1.6s ease-in-out infinite;
+}

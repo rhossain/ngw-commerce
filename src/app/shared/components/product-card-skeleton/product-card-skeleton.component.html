@@ -1,0 +1,41 @@
+<!-- ─── Grid / List mode: display:contents lets cards be direct grid children ─── -->
+<ng-container *ngIf="displayStyle !== 'carousel'">
+  <div *ngFor="let _ of cards" class="skeleton-card bg-white rounded-lg shadow-md overflow-hidden">
+    <div class="skeleton-box aspect-square w-full"></div>
+    <div class="p-4 space-y-3">
+      <div class="skeleton-box h-4 rounded w-3/4"></div>
+      <div class="skeleton-box h-4 rounded w-1/2"></div>
+      <div class="flex gap-1 items-center">
+        <div class="skeleton-box h-3 w-20 rounded"></div>
+      </div>
+      <div class="flex items-center justify-between pt-1">
+        <div class="skeleton-box h-5 w-16 rounded"></div>
+        <div class="skeleton-box h-8 w-24 rounded-md"></div>
+      </div>
+    </div>
+  </div>
+</ng-container>
+
+<!-- ─── Carousel mode: horizontal row clipped to container width ─── -->
+<div *ngIf="displayStyle === 'carousel'" class="carousel-skeleton overflow-hidden w-full">
+  <div class="flex" [style.gap.px]="spaceBetween">
+    <div
+      *ngFor="let _ of cards"
+      class="skeleton-card flex-shrink-0 bg-white rounded-lg shadow-md overflow-hidden"
+      [style.width]="carouselCardWidth"
+    >
+      <div class="skeleton-box aspect-square w-full"></div>
+      <div class="p-4 space-y-3">
+        <div class="skeleton-box h-4 rounded w-3/4"></div>
+        <div class="skeleton-box h-4 rounded w-1/2"></div>
+        <div class="flex gap-1 items-center">
+          <div class="skeleton-box h-3 w-20 rounded"></div>
+        </div>
+        <div class="flex items-center justify-between pt-1">
+          <div class="skeleton-box h-5 w-16 rounded"></div>
+          <div class="skeleton-box h-8 w-24 rounded-md"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

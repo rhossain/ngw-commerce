@@ -45,6 +45,8 @@ export interface CategoryProductsConfig {
   showViewAll: boolean;
   showOnSaleOnly: boolean;
   showFeaturedOnly: boolean;
+  carouselNavigation: boolean;
+  carouselPagination: boolean;
 }
 
 export interface CategoriesDisplayConfig {
@@ -351,7 +353,9 @@ export class CommerceSettingsService {
       sortOrder,
       showViewAll: toBool(raw?.showViewAll, true),
       showOnSaleOnly: toBool(raw?.showOnSaleOnly, false),
-      showFeaturedOnly: toBool(raw?.showFeaturedOnly, false)
+      showFeaturedOnly: toBool(raw?.showFeaturedOnly, false),
+      carouselNavigation: toBool(raw?.carouselNavigation, true),
+      carouselPagination: toBool(raw?.carouselPagination, true)
     };
   }
 }

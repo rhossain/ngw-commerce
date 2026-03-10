@@ -15,7 +15,26 @@
       <img *ngIf="slide.imageUrl" 
            [src]="slide.imageUrl" 
            [alt]="slide.title"
-           class="absolute inset-0 w-full h-full object-cover">
+           (load)="onImageLoad(i)"
+           class="absolute inset-0 w-full h-full object-cover"
+           [class.opacity-0]="!imageLoaded[i]"
+           [class.opacity-100]="!!imageLoaded[i]"
+           style="transition: opacity 0.4s ease">
+
+      <!-- Shimmer skeleton while image is loading -->
+      <div *ngIf="slide.imageUrl && !imageLoaded[i]"
+           class="hero-slide-skeleton absolute inset-0">
+        <div class="hero-shimmer"></div>
+        <!-- Mimic the text/button layout so the layout doesn't jump -->
+        <div class="absolute inset-0 flex items-center px-8 md:px-16 py-12 md:py-16">
+          <div class="space-y-4 w-full max-w-xs">
+            <div class="hero-skeleton-box h-4 w-1/2 rounded"></div>
+            <div class="hero-skeleton-box h-10 w-3/4 rounded"></div>
+            <div class="hero-skeleton-box h-6 w-1/3 rounded"></div>
+            <div class="hero-skeleton-box h-12 w-36 rounded-lg mt-4"></div>
+          </div>
+        </div>
+      </div>
       
       <!-- Content Overlay -->
       <div class="relative h-full flex items-center justify-between px-8 md:px-16 py-12 md:py-16">

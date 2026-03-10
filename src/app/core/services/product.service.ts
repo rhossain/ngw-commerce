@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, of, catchError, forkJoin, throwError } from 'rxjs';
+import { Observable, of, catchError, forkJoin, throwError, merge } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { ApiService } from './api.service';
 import { Product, ProductSearchParams, ProductSearchResponse, ProductVariation, ProductCategory } from '../models/product.model';
@@ -11,9 +11,61 @@ import { ProductReview, ReviewCreateRequest, ReviewUpdateRequest } from '../mode
 export class ProductService {
   constructor(private api: ApiService) {}
 
+  /**
+   * Progressive product stream:
+   * 1. Emits all products immediately after the initial list is fetched (base data, variation IDs only).
+   * 2. For each variable product, fetches its full variation objects in the background
+   *    and re-emits the updated product array as each one completes — no waiting for all.
+   */
+  streamProducts(params: ProductSearchParams): Observable<Product[]> {
+    return this.api.get<any[]>('/products', params, { skipLoading: true }).pipe(
+      switchMap((products: any[]) => {
+        if (!products || products.length === 0) {
+          return of([]);
+        }
+
+        const variableProducts = products.filter(
+          p => p.type === 'variable' && p.variations && p.variations.length > 0
+        );
+
+        if (variableProducts.length === 0) {
+          // Simple products only — emit immediately
+          return of(products as Product[]);
+        }
+
+        // Emit the base products right away (skeletons disappear instantly)
+        const immediate$ = of(products as Product[]);
+
+        // For each variable product, fetch its variations independently and
+        // emit the whole updated array as each product finishes
+        const variationStreams = variableProducts.map(product =>
+          forkJoin(
+            product.variations.map((variationId: number) =>
+              this.api.get<ProductVariation>(
+                `/products/${product.id}/variations/${variationId}`,
+                undefined,
+                { skipLoading: true }
+              ).pipe(catchError(() => of(null)))
+            )
+          ).pipe(
+            map(variations => {
+              product.variations = (variations as (ProductVariation | null)[]).filter(v => v !== null);
+              // Return a fresh array reference so Angular change detection fires
+              return [...products] as Product[];
+            })
+          )
+        );
+
+        // merge: immediate$ fires first, then each variation stream fires as it completes
+        return merge(immediate$, ...variationStreams);
+      }),
+      catchError(() => of([]))
+    );
+  }
+
   searchProducts(params: ProductSearchParams): Observable<ProductSearchResponse> {
     // Use standard WooCommerce products endpoint
-    return this.api.get<any[]>('/products', params).pipe(
+    return this.api.get<any[]>('/products', params, { skipLoading: true }).pipe(
       switchMap((products: any[]) => {
         // Check if there are any variable products that need variation details
         const variableProducts = products.filter(p => p.type === 'variable' && p.variations && p.variations.length > 0);
@@ -32,7 +84,7 @@ export class ProductService {
         // Fetch variations for all variable products
         const variationFetchRequests = variableProducts.map(product => {
           const variationRequests = product.variations.map((variationId: number) =>
-            this.api.get<ProductVariation>(`/products/${product.id}/variations/${variationId}`).pipe(
+            this.api.get<ProductVariation>(`/products/${product.id}/variations/${variationId}`, undefined, { skipLoading: true }).pipe(
               catchError(error => {
                 console.error(`Error fetching variation ${variationId} for product ${product.id}:`, error);
                 return of(null);
@@ -75,7 +127,7 @@ export class ProductService {
   }
 
   getProductById(id: number): Observable<Product> {
-    return this.api.get<Product>(`/products/${id}`).pipe(
+    return this.api.get<Product>(`/products/${id}`, undefined, { skipLoading: true }).pipe(
       catchError((error) => {
         console.error('Product fetch error:', error);
         throw error;
@@ -88,7 +140,7 @@ export class ProductService {
     console.log('Fetching product by slug:', slug);
     
     // Include variations in the response for variable products
-    return this.api.get<any[]>('/products', { slug: slug, _embed: true }).pipe(
+    return this.api.get<any[]>('/products', { slug: slug, _embed: true }, { skipLoading: true }).pipe(
       switchMap((products: any[]) => {
         console.log('WooCommerce API response for slug', slug, ':', products);
         
@@ -106,7 +158,7 @@ export class ProductService {
             
             // Fetch all variations
             const variationRequests = product.variations.map((variationId: number) =>
-              this.api.get<ProductVariation>(`/products/${product.id}/variations/${variationId}`).pipe(
+              this.api.get<ProductVariation>(`/products/${product.id}/variations/${variationId}`, undefined, { skipLoading: true }).pipe(
                 catchError(error => {
                   console.error(`Error fetching variation ${variationId}:`, error);
                   return of(null);
@@ -137,7 +189,7 @@ export class ProductService {
         const searchTerm = slug.replace(/-/g, ' ');
         console.log('Trying fallback search with term:', searchTerm);
         
-        return this.api.get<any[]>('/products', { search: searchTerm }).pipe(
+        return this.api.get<any[]>('/products', { search: searchTerm }, { skipLoading: true }).pipe(
           map((products: any[]) => {
             if (products && products.length > 0) {
               console.log('Product found by search:', products[0]);
@@ -155,7 +207,7 @@ export class ProductService {
 
   getRelatedProducts(productId: number): Observable<Product[]> {
     // Get product first to find related IDs, or just return similar products
-    return this.api.get<Product[]>('/products', { per_page: 4 }).pipe(
+    return this.api.get<Product[]>('/products', { per_page: 4 }, { skipLoading: true }).pipe(
       catchError((error) => {
         console.error('Related products error:', error);
         return of([]);
@@ -270,7 +322,7 @@ export class ProductService {
    * Get all product categories from WooCommerce
    */
   getCategories(): Observable<ProductCategory[]> {
-    return this.api.get<ProductCategory[]>('/products/categories', { per_page: 100 }).pipe(
+    return this.api.get<ProductCategory[]>('/products/categories', { per_page: 100 }, { skipLoading: true }).pipe(
       catchError((error) => {
         console.error('Error fetching categories:', error);
         return of([]);
@@ -282,7 +334,7 @@ export class ProductService {
    * Get a specific category by ID
    */
   getCategoryById(id: number): Observable<ProductCategory> {
-    return this.api.get<ProductCategory>(`/products/categories/${id}`).pipe(
+    return this.api.get<ProductCategory>(`/products/categories/${id}`, undefined, { skipLoading: true }).pipe(
       catchError((error) => {
         console.error('Error fetching category:', error);
         throw error;
@@ -359,7 +411,7 @@ export class ProductService {
    * WooCommerce endpoint: GET /products/attributes
    */
   getProductAttributes(): Observable<any[]> {
-    return this.api.get<any[]>('/products/attributes', { per_page: 100 }).pipe(
+    return this.api.get<any[]>('/products/attributes', { per_page: 100 }, { skipLoading: true }).pipe(
       catchError(error => {
         console.error('Error fetching product attributes:', error);
         return of([]);
@@ -372,7 +424,7 @@ export class ProductService {
    * WooCommerce endpoint: GET /products/attributes/{attribute_id}/terms
    */
   getAttributeTerms(attributeId: number): Observable<any[]> {
-    return this.api.get<any[]>(`/products/attributes/${attributeId}/terms`, { per_page: 100 }).pipe(
+    return this.api.get<any[]>(`/products/attributes/${attributeId}/terms`, { per_page: 100 }, { skipLoading: true }).pipe(
       catchError(error => {
         console.error(`Error fetching terms for attribute ${attributeId}:`, error);
         return of([]);

@@ -431,9 +431,9 @@
 
       <!-- Products Grid -->
       <div class="flex-1">
-        <!-- Loading State -->
-        <div *ngIf="loading$ | async" class="flex items-center justify-center py-20">
-          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        <!-- Loading State: skeleton cards -->
+        <div *ngIf="loading$ | async" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <app-product-card-skeleton [count]="12"></app-product-card-skeleton>
         </div>
 
         <!-- Products Grid/List -->

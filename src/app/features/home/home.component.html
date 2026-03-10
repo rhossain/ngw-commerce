@@ -11,7 +11,8 @@
     [carouselLoop]="section.carouselLoop" [carouselSlidesPerView]="section.carouselSlidesPerView"
     [carouselSpaceBetween]="section.carouselSpaceBetween" [gridColumns]="section.gridColumns" [sortBy]="section.sortBy"
     [sortOrder]="section.sortOrder" [showViewAll]="section.showViewAll" [showOnSaleOnly]="section.showOnSaleOnly"
-    [showFeaturedOnly]="section.showFeaturedOnly">
+    [showFeaturedOnly]="section.showFeaturedOnly" [carouselNavigation]="section.carouselNavigation"
+    [carouselPagination]="section.carouselPagination">
   </app-category-products>
 </section>
 
@@ -127,9 +128,3 @@
   </div>
 </section>
 
-<!-- Loading Spinner -->
-<div *ngIf="loading$ | async" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-  <div class="bg-white rounded-lg p-6">
-    <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-cyan-500"></div>
-  </div>
-</div>

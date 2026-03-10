@@ -16,10 +16,27 @@
     </a>
   </div>
 
-  <!-- Loading State -->
-  <div *ngIf="loading" class="flex justify-center items-center py-12">
-    <app-loading-spinner></app-loading-spinner>
-  </div>
+  <!-- Loading State: matches the active display style -->
+  <ng-container *ngIf="loading">
+    <!-- Grid skeleton -->
+    <div *ngIf="displayStyle === 'grid'" [ngClass]="getGridClasses()">
+      <app-product-card-skeleton [count]="limit" displayStyle="grid"></app-product-card-skeleton>
+    </div>
+
+    <!-- Carousel skeleton -->
+    <app-product-card-skeleton
+      *ngIf="displayStyle === 'carousel'"
+      displayStyle="carousel"
+      [count]="carouselSlidesPerView"
+      [slidesPerView]="carouselSlidesPerView"
+      [spaceBetween]="carouselSpaceBetween">
+    </app-product-card-skeleton>
+
+    <!-- List skeleton -->
+    <div *ngIf="displayStyle === 'list'" [ngClass]="getListClasses()">
+      <app-product-card-skeleton [count]="limit" displayStyle="list"></app-product-card-skeleton>
+    </div>
+  </ng-container>
 
   <!-- Error State -->
   <div *ngIf="error && !loading" class="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
@@ -48,13 +65,8 @@
   <!-- Carousel View -->
   <div *ngIf="!loading && !error && products.length > 0 && displayStyle === 'carousel'" class="carousel-container">
     <swiper-container
-      [slidesPerView]="1"
-      [spaceBetween]="carouselSpaceBetween"
-      [loop]="carouselLoop"
-      [navigation]="true"
-      [pagination]="getCarouselPagination()"
-      [autoplay]="getCarouselAutoplay()"
-      [breakpoints]="getCarouselBreakpoints()"
+      #swiperEl
+      init="false"
       class="product-carousel"
     >
       <swiper-slide *ngFor="let product of products; trackBy: trackByProductId">

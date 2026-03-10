@@ -1,11 +1,11 @@
-import { Component, Input, OnInit, OnDestroy, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, AfterViewInit, ViewChild, ElementRef, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { Product } from '../../../core/models/product.model';
 import { ProductService } from '../../../core/services/product.service';
 import { ProductCardComponent } from '../product-card/product-card.component';
-import { LoadingSpinnerComponent } from '../loading-spinner/loading-spinner.component';
+import { ProductCardSkeletonComponent } from '../product-card-skeleton/product-card-skeleton.component';
 import { register } from 'swiper/element/bundle';
 
 // Register Swiper web components
@@ -20,13 +20,13 @@ export type DisplayStyle = 'carousel' | 'grid' | 'list';
     CommonModule,
     RouterModule,
     ProductCardComponent,
-    LoadingSpinnerComponent
+    ProductCardSkeletonComponent
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './category-products.component.html',
   styleUrls: ['./category-products.component.css']
 })
-export class CategoryProductsComponent implements OnInit, OnDestroy {
+export class CategoryProductsComponent implements OnInit, AfterViewInit, OnDestroy {
   // Required inputs
   @Input() categoryId!: number;
   
@@ -48,6 +48,8 @@ export class CategoryProductsComponent implements OnInit, OnDestroy {
   @Input() carouselLoop: boolean = true;
   @Input() carouselSlidesPerView: number = 4;
   @Input() carouselSpaceBetween: number = 20;
+  @Input() carouselNavigation: boolean = true;
+  @Input() carouselPagination: boolean = true;
   
   // List specific options
   @Input() listCompact: boolean = false;
@@ -63,10 +65,20 @@ export class CategoryProductsComponent implements OnInit, OnDestroy {
   loading: boolean = true;
   error: string | null = null;
   categoryName: string = '';
-  
+
+  @ViewChild('swiperEl') swiperEl?: ElementRef;
+  private swiperInitialized = false;
+
   private destroy$ = new Subject<void>();
 
   constructor(private productService: ProductService) {}
+
+  ngAfterViewInit(): void {
+    // If products arrived before the view was ready, init now
+    if (this.displayStyle === 'carousel' && this.products.length > 0) {
+      this.initOrUpdateSwiper();
+    }
+  }
 
   ngOnInit(): void {
     if (!this.categoryId) {
@@ -104,12 +116,22 @@ export class CategoryProductsComponent implements OnInit, OnDestroy {
       params.featured = true;
     }
 
-    this.productService.searchProducts(params)
+    let firstEmission = true;
+
+    this.productService.streamProducts(params)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (response) => {
-          this.products = response.products || [];
-          this.loading = false;
+        next: (products) => {
+          this.products = products;
+          if (firstEmission) {
+            // Hide skeleton immediately — further emissions silently update cards
+            this.loading = false;
+            firstEmission = false;
+          }
+          // Re-init/update Swiper after Angular renders the new slides
+          if (this.displayStyle === 'carousel') {
+            setTimeout(() => this.initOrUpdateSwiper());
+          }
         },
         error: (error) => {
           console.error('Error loading products:', error);
@@ -117,6 +139,36 @@ export class CategoryProductsComponent implements OnInit, OnDestroy {
           this.loading = false;
         }
       });
+  }
+
+  private initOrUpdateSwiper(): void {
+    const el = this.swiperEl?.nativeElement;
+    if (!el) return;
+
+    if (!this.swiperInitialized) {
+      // Assign all params before the first initialize() call
+      Object.assign(el, {
+        slidesPerView: 1,
+        spaceBetween: this.carouselSpaceBetween,
+        loop: this.carouselLoop,
+        navigation: this.carouselNavigation,
+        pagination: this.carouselPagination ? { clickable: true, dynamicBullets: false } : false,
+        autoplay: this.carouselAutoplay
+          ? { delay: this.carouselDelay, disableOnInteraction: false }
+          : false,
+        breakpoints: {
+          640: { slidesPerView: 2, spaceBetween: 15 },
+          768: { slidesPerView: 3, spaceBetween: 20 },
+          1024: { slidesPerView: this.carouselSlidesPerView, spaceBetween: this.carouselSpaceBetween }
+        }
+      });
+      el.initialize();
+      this.swiperInitialized = true;
+    } else if (el.swiper) {
+      // Subsequent product updates: ask Swiper to re-count slides & bullets
+      el.swiper.update();
+      el.swiper.pagination?.update();
+    }
   }
 
   private loadCategoryName(): void {

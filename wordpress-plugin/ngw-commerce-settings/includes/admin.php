@@ -413,6 +413,14 @@ class NGWCS_Admin {
             echo '<tr><th scope="row"><label>' . esc_html__( 'Carousel Space Between (px)', 'ngw-commerce-settings' ) . '</label></th><td>';
             echo '<input type="number" name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][category_products_sections][' . intval( $i ) . '][carouselSpaceBetween]" value="' . esc_attr( isset( $cp['carouselSpaceBetween'] ) ? $cp['carouselSpaceBetween'] : 20 ) . '" min="0" max="60" /></td></tr>';
 
+            // Carousel Navigation (arrows)
+            echo '<tr><th scope="row"><label>' . esc_html__( 'Show Carousel Navigation (Arrows)', 'ngw-commerce-settings' ) . '</label></th><td>';
+            echo '<input type="checkbox" name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][category_products_sections][' . intval( $i ) . '][carouselNavigation]" value="1" ' . checked( ! isset( $cp['carouselNavigation'] ) || $cp['carouselNavigation'], true, false ) . ' /></td></tr>';
+
+            // Carousel Pagination (bullets)
+            echo '<tr><th scope="row"><label>' . esc_html__( 'Show Carousel Pagination (Bullets)', 'ngw-commerce-settings' ) . '</label></th><td>';
+            echo '<input type="checkbox" name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][category_products_sections][' . intval( $i ) . '][carouselPagination]" value="1" ' . checked( ! isset( $cp['carouselPagination'] ) || $cp['carouselPagination'], true, false ) . ' /></td></tr>';
+
             // Grid Columns
             echo '<tr><th scope="row"><label>' . esc_html__( 'Grid Columns', 'ngw-commerce-settings' ) . '</label></th><td>';
             echo '<input type="number" name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][category_products_sections][' . intval( $i ) . '][gridColumns]" value="' . esc_attr( isset( $cp['gridColumns'] ) ? $cp['gridColumns'] : 4 ) . '" min="1" max="6" /></td></tr>';
@@ -512,6 +520,14 @@ class NGWCS_Admin {
         // Carousel Space Between
         echo '<tr><th scope="row"><label>' . esc_html__( 'Carousel Space Between (px)', 'ngw-commerce-settings' ) . '</label></th><td>';
         echo '<input type="number" name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][category_products_sections][__INDEX__][carouselSpaceBetween]" value="20" min="0" max="60" />';
+        echo '</td></tr>';
+        // Carousel Navigation (arrows)
+        echo '<tr><th scope="row"><label>' . esc_html__( 'Show Carousel Navigation (Arrows)', 'ngw-commerce-settings' ) . '</label></th><td>';
+        echo '<input type="checkbox" name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][category_products_sections][__INDEX__][carouselNavigation]" value="1" checked />';
+        echo '</td></tr>';
+        // Carousel Pagination (bullets)
+        echo '<tr><th scope="row"><label>' . esc_html__( 'Show Carousel Pagination (Bullets)', 'ngw-commerce-settings' ) . '</label></th><td>';
+        echo '<input type="checkbox" name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][category_products_sections][__INDEX__][carouselPagination]" value="1" checked />';
         echo '</td></tr>';
         // Grid Columns
         echo '<tr><th scope="row"><label>' . esc_html__( 'Grid Columns', 'ngw-commerce-settings' ) . '</label></th><td>';

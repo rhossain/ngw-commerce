@@ -19,6 +19,8 @@ export class HeroBannerComponent implements OnInit, OnDestroy {
   @Input() height: 'sm' | 'md' | 'lg' | 'xl' = 'lg';
   
   currentSlide = 0;
+  /** Tracks which slide images have finished loading */
+  imageLoaded: { [index: number]: boolean } = {};
   private slideInterval: any;
 
   ngOnInit(): void {
@@ -77,4 +79,8 @@ export class HeroBannerComponent implements OnInit, OnDestroy {
   }
 
   // External link logic no longer needed; internal mapping performed in service.
+
+  onImageLoad(index: number): void {
+    this.imageLoaded[index] = true;
+  }
 }

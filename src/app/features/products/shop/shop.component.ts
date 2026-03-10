@@ -10,6 +10,7 @@ import * as ProductActions from '../../../store/actions/product.actions';
 import * as ProductSelectors from '../../../store/selectors/product.selectors';
 import { Product, ProductSearchParams, ProductCategory, ProductAttribute } from '../../../core/models/product.model';
 import { ProductCardComponent } from '../../../shared/components/product-card/product-card.component';
+import { ProductCardSkeletonComponent } from '../../../shared/components/product-card-skeleton/product-card-skeleton.component';
 import { ProductService } from '../../../core/services/product.service';
 
 interface ShopFilters {
@@ -28,7 +29,7 @@ interface ShopFilters {
 @Component({
   selector: 'app-shop',
   standalone: true,
-  imports: [CommonModule, FormsModule, ProductCardComponent],
+  imports: [CommonModule, FormsModule, ProductCardComponent, ProductCardSkeletonComponent],
   templateUrl: './shop.component.html',
   styleUrls: ['./shop.component.css']
 })
