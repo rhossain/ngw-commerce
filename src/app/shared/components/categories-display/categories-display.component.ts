@@ -1,6 +1,8 @@
-import { Component, Input, OnInit, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { 
   CategoryDisplay, 
   CategoryDisplayStyle, 
@@ -9,6 +11,7 @@ import {
   CategoryCarouselOptions
 } from './categories-display.model';
 import { CommerceSettingsService } from '../../../core/services/commerce-settings.service';
+
 
 /**
  * CategoriesDisplayComponent
@@ -36,7 +39,7 @@ import { CommerceSettingsService } from '../../../core/services/commerce-setting
   templateUrl: './categories-display.component.html',
   styleUrl: './categories-display.component.css'
 })
-export class CategoriesDisplayComponent implements OnInit {
+export class CategoriesDisplayComponent implements OnInit, OnDestroy {
   /** Array of categories to display */
   @Input() categories: CategoryDisplay[] = [];
 
@@ -99,12 +102,26 @@ export class CategoriesDisplayComponent implements OnInit {
   /** Card style for masonry grid (rounded corners, shadow, etc.) */
   @Input() cardStyle: 'minimal' | 'elevated' | 'bordered' = 'elevated';
 
+  /** Max number of categories to display. 0 = show all. */
+  @Input() limit: number = 0;
+
+  /** Returns the categories slice respecting the limit */
+  get displayedCategories(): CategoryDisplay[] {
+    return this.limit > 0 ? this.categories.slice(0, this.limit) : this.categories;
+  }
+
+  private destroy$ = new Subject<void>();
+
   constructor(private settingsService: CommerceSettingsService) {}
 
   ngOnInit(): void {
-    // Apply WordPress settings if enabled
     if (this.useWordPressSettings) {
-      this.applyWordPressSettings();
+      // Subscribe so settings are applied after the HTTP response arrives,
+      // not before — fixes the race condition where settingsCache is null
+      // when the component initialises alongside the parent's fetchSettings().
+      this.settingsService.fetchSettings()
+        .pipe(takeUntil(this.destroy$))
+        .subscribe(() => this.applyWordPressSettings());
     }
 
     // Set default grid options if not provided
@@ -176,11 +193,33 @@ export class CategoriesDisplayComponent implements OnInit {
     return styleMap[this.cardStyle] || styleMap.elevated;
   }
 
+  /** Grid column span for each bento card (inline style — bypasses Tailwind scanner) */
+  getMasonryGridColumn(i: number): string {
+    const cols = ['1 / span 2', '3', '4', '4', '1 / span 2', '3', '4'];
+    return cols[i] ?? 'auto';
+  }
+
+  /** Grid row span for each bento card */
+  getMasonryGridRow(i: number): string {
+    const rows = ['1 / span 2', '1 / span 2', '1', '2', '3', '3', '3'];
+    return rows[i] ?? 'auto';
+  }
+
+  /** Fallback gradient class when a category has no image */
+  getMasonryFallbackClass(i: number): string {
+    return `masonry-fallback-${i % 7}`;
+  }
+
   /**
    * Track by function for *ngFor optimization
    */
   trackByCategory(index: number, category: CategoryDisplay): string | number {
     return category.id;
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   /**
@@ -203,7 +242,7 @@ export class CategoriesDisplayComponent implements OnInit {
     console.log('[CategoriesDisplayComponent] Applying WordPress settings:', {
       displayStyle: config.displayStyle,
       size: config.size,
-      gridColumns: config.gridColumns,
+      limit: config.limit,
       showCount: config.showCount
     });
 
@@ -215,15 +254,7 @@ export class CategoriesDisplayComponent implements OnInit {
     if (this.showCount === false) this.showCount = config.showCount;
     if (this.enableHover === true) this.enableHover = config.enableHover;
     if (this.cardStyle === 'elevated') this.cardStyle = config.cardStyle;
-    
-    // Apply grid options
-    if (this.gridOptions.gap === 24) this.gridOptions.gap = config.gridGap;
-    if (!this.gridOptions.columns || 
-        (this.gridOptions.columns.mobile === 3 && 
-         this.gridOptions.columns.tablet === 4 && 
-         this.gridOptions.columns.desktop === 7)) {
-      this.gridOptions.columns = config.gridColumns;
-    }
+    if (this.limit === 0) this.limit = config.limit;
     
     // Apply carousel options
     if (this.carouselOptions.slidesPerView === 'auto') {

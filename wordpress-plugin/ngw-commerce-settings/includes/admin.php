@@ -609,31 +609,12 @@ class NGWCS_Admin {
         echo '</select>';
         echo '<p class="description">' . esc_html__( 'Visual style for masonry-grid display mode', 'ngw-commerce-settings' ) . '</p></td></tr>';
         
-        // Grid Settings
-        echo '<tr><th colspan="2" style="padding-top:20px;"><h4 style="margin:0;">' . esc_html__( 'Grid Settings', 'ngw-commerce-settings' ) . '</h4></th></tr>';
-        
-        $grid_cols = isset( $cd['gridColumns'] ) && is_array( $cd['gridColumns'] ) ? $cd['gridColumns'] : array( 'mobile' => 3, 'tablet' => 4, 'desktop' => 7 );
-        
-        // Grid Columns - Mobile
-        echo '<tr><th scope="row"><label>' . esc_html__( 'Grid Columns (Mobile)', 'ngw-commerce-settings' ) . '</label></th><td>';
-        echo '<input type="number" name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][categories_display][gridColumns][mobile]" value="' . esc_attr( $grid_cols['mobile'] ?? 3 ) . '" min="1" max="6" style="width:80px;" />';
-        echo '<p class="description">' . esc_html__( 'Number of columns on mobile devices (< 640px)', 'ngw-commerce-settings' ) . '</p></td></tr>';
-        
-        // Grid Columns - Tablet
-        echo '<tr><th scope="row"><label>' . esc_html__( 'Grid Columns (Tablet)', 'ngw-commerce-settings' ) . '</label></th><td>';
-        echo '<input type="number" name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][categories_display][gridColumns][tablet]" value="' . esc_attr( $grid_cols['tablet'] ?? 4 ) . '" min="1" max="8" style="width:80px;" />';
-        echo '<p class="description">' . esc_html__( 'Number of columns on tablet devices (640px - 1024px)', 'ngw-commerce-settings' ) . '</p></td></tr>';
-        
-        // Grid Columns - Desktop
-        echo '<tr><th scope="row"><label>' . esc_html__( 'Grid Columns (Desktop)', 'ngw-commerce-settings' ) . '</label></th><td>';
-        echo '<input type="number" name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][categories_display][gridColumns][desktop]" value="' . esc_attr( $grid_cols['desktop'] ?? 7 ) . '" min="1" max="12" style="width:80px;" />';
-        echo '<p class="description">' . esc_html__( 'Number of columns on desktop devices (> 1024px)', 'ngw-commerce-settings' ) . '</p></td></tr>';
-        
-        // Grid Gap
-        echo '<tr><th scope="row"><label>' . esc_html__( 'Grid Gap (px)', 'ngw-commerce-settings' ) . '</label></th><td>';
-        echo '<input type="number" name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][categories_display][gridGap]" value="' . esc_attr( isset( $cd['gridGap'] ) ? $cd['gridGap'] : 24 ) . '" min="0" max="100" style="width:80px;" />';
-        echo '<p class="description">' . esc_html__( 'Space between grid items in pixels', 'ngw-commerce-settings' ) . '</p></td></tr>';
-        
+        // Items to Show
+        echo '<tr><th colspan="2" style="padding-top:20px;"><h4 style="margin:0;">' . esc_html__( 'Display Settings', 'ngw-commerce-settings' ) . '</h4></th></tr>';
+        echo '<tr><th scope="row"><label>' . esc_html__( 'Items to Show', 'ngw-commerce-settings' ) . '</label></th><td>';
+        echo '<input type="number" name="' . esc_attr( NGWCS_OPTION_KEY ) . '[component_settings][categories_display][limit]" value="' . esc_attr( isset( $cd['limit'] ) ? $cd['limit'] : 10 ) . '" min="1" max="100" style="width:80px;" />';
+        echo '<p class="description">' . esc_html__( 'Maximum number of categories to display.', 'ngw-commerce-settings' ) . '</p></td></tr>';
+
         // Carousel Settings
         echo '<tr><th colspan="2" style="padding-top:20px;"><h4 style="margin:0;">' . esc_html__( 'Carousel Settings', 'ngw-commerce-settings' ) . '</h4></th></tr>';
         

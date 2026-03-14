@@ -20,7 +20,7 @@
 <!-- Flat List Style (Circular Icons Grid) -->
 <div *ngIf="displayStyle === 'flat-list'" 
      [class]="'grid gap-8 ' + getGridColumnsClass() + ' ' + containerClass">
-  <div *ngFor="let category of categories; trackBy: trackByCategory; let i = index" 
+  <div *ngFor="let category of displayedCategories; trackBy: trackByCategory; let i = index" 
        [routerLink]="getCategoryLink(category)"
        class="text-center category-item cursor-pointer group"
        [class.category-hover]="enableHover">
@@ -79,76 +79,72 @@
   </div>
 </div>
 
-<!-- Masonry Grid Style (Card-based Layout) -->
-<div *ngIf="displayStyle === 'masonry-grid'" 
-     [class]="'grid gap-6 ' + getGridColumnsClass() + ' ' + containerClass">
+<!-- Masonry Bento Grid (Figma) -->
+<div *ngIf="displayStyle === 'masonry-grid'"
+     class="masonry-bento"
+     [ngClass]="containerClass">
+
   <div *ngFor="let category of categories; trackBy: trackByCategory; let i = index"
-       [routerLink]="getCategoryLink(category)"
-       [class]="getCardStyleClass()"
-       class="cursor-pointer transition-all duration-500 relative group overflow-hidden"
-       [class.category-hover]="enableHover">
-    
-    <!-- Gradient background overlay -->
-    <div class="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-0"></div>
-    
-    <!-- Image Header with modern overlay -->
-    <div *ngIf="category.imageUrl" 
-         class="w-full h-40 rounded-xl mb-4 overflow-hidden relative bg-gradient-to-br from-gray-100 to-gray-50">
-      <img [src]="category.imageUrl" 
-           [alt]="category.name"
-           class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
-      <!-- Dark overlay on hover -->
-      <div class="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-      <!-- Category badge overlay -->
-      <div class="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-semibold text-gray-700 shadow-md opacity-0 group-hover:opacity-100 transition-all duration-300 transform -translate-y-2 group-hover:translate-y-0">
-        <i class="fas fa-tag mr-1 text-cyan-500"></i>
-        Featured
+       class="masonry-card"
+       [style.grid-column]="getMasonryGridColumn(i)"
+       [style.grid-row]="getMasonryGridRow(i)"
+       [routerLink]="getCategoryLink(category)">
+
+    <!-- Photo background -->
+    <img *ngIf="category.imageUrl"
+         [src]="category.imageUrl"
+         [alt]="category.name"
+         class="masonry-bg-img">
+
+    <!-- Colour gradient fallback when no image -->
+    <div *ngIf="!category.imageUrl"
+         class="masonry-bg-fallback"
+         [ngClass]="getMasonryFallbackClass(i)">
+      <i *ngIf="category.icon" [class]="'fas ' + category.icon" class="masonry-fallback-icon"></i>
+    </div>
+
+    <!-- Dark scrim: bottom-to-top fade matching Figma -->
+    <div class="masonry-scrim"></div>
+
+    <!-- Trending badge — hero card only -->
+    <div *ngIf="i === 0" class="masonry-badge">
+      <span class="masonry-badge-pill">Trending</span>
+    </div>
+
+    <!-- Bottom content — all cards except wide card (index 4) -->
+    <div *ngIf="i !== 4" class="masonry-content">
+      <h4 class="masonry-title"
+          [class.masonry-title-lg]="i === 0"
+          [class.masonry-title-md]="i === 1">
+        {{ category.name }}
+      </h4>
+      <p *ngIf="category.count" class="masonry-count"
+         [class.masonry-count-lg]="i === 0">
+        {{ category.count }} Products
+      </p>
+      <!-- Shop Now CTA -->
+      <div *ngIf="i === 0" class="masonry-cta">
+        <span>Shop Now</span>
+        <i class="fas fa-arrow-right masonry-arrow"></i>
+      </div>
+      <!-- Explore CTA -->
+      <div *ngIf="i === 1" class="masonry-explore">
+        <span>Explore</span>
+        <i class="fas fa-arrow-right masonry-arrow"></i>
       </div>
     </div>
-    
-    <!-- Icon Header with gradient background -->
-    <div *ngIf="!category.imageUrl && category.icon"
-         class="w-full h-40 rounded-xl mb-4 bg-gradient-to-br from-cyan-50 via-blue-50 to-purple-50 flex items-center justify-center relative overflow-hidden group-hover:from-cyan-100 group-hover:via-blue-100 group-hover:to-purple-100 transition-all duration-500">
-      <!-- Animated circles -->
-      <div class="absolute top-0 right-0 w-32 h-32 bg-white/30 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700"></div>
-      <div class="absolute bottom-0 left-0 w-24 h-24 bg-white/20 rounded-full -ml-12 -mb-12 group-hover:scale-150 transition-transform duration-700"></div>
-      
-      <i [class]="'fas ' + category.icon + ' text-6xl relative z-10'"
-         [ngClass]="{
-           'text-cyan-600': i % 4 === 0,
-           'text-blue-600': i % 4 === 1,
-           'text-purple-600': i % 4 === 2,
-           'text-indigo-600': i % 4 === 3
-         }"
-         class="transform group-hover:scale-110 group-hover:rotate-12 transition-transform duration-500"></i>
-    </div>
-    
-    <!-- Content with modern typography -->
-    <div class="flex items-start justify-between relative z-10">
-      <div class="flex-1">
-        <h4 class="font-bold text-gray-900 text-lg mb-2 group-hover:text-cyan-600 transition-colors duration-300">
-          {{ category.name }}
-        </h4>
-        <p *ngIf="category.description" 
-           class="text-sm text-gray-600 line-clamp-2 leading-relaxed">
-          {{ category.description }}
-        </p>
-        <!-- View products link -->
-        <div class="mt-3 text-cyan-600 text-sm font-medium flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <span>View products</span>
-          <i class="fas fa-arrow-right text-xs transform group-hover:translate-x-1 transition-transform duration-300"></i>
-        </div>
+
+    <!-- Wide card (index 4): text left, green arrow button right -->
+    <div *ngIf="i === 4" class="masonry-content masonry-content-wide">
+      <div>
+        <h4 class="masonry-title masonry-title-md">{{ category.name }}</h4>
+        <p *ngIf="category.count" class="masonry-count">{{ category.count }} Products</p>
       </div>
-      
-      <!-- Count Badge with modern design -->
-      <span *ngIf="showCount && category.count" 
-            class="ml-3 bg-gradient-to-r from-gray-100 to-gray-50 text-gray-800 text-sm font-bold px-3 py-1.5 rounded-full whitespace-nowrap shadow-sm border border-gray-200 group-hover:from-cyan-500 group-hover:to-blue-500 group-hover:text-white group-hover:border-transparent transition-all duration-300">
-        {{ category.count }}
-      </span>
+      <div class="masonry-arrow-btn">
+        <i class="fas fa-arrow-right masonry-arrow-btn-icon"></i>
+      </div>
     </div>
-    
-    <!-- Decorative corner accent -->
-    <div class="absolute top-0 right-0 w-20 h-20 bg-gradient-to-bl from-cyan-400/10 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
   </div>
 </div>
 
@@ -165,7 +161,7 @@
     [breakpoints]="carouselOptions.breakpoints"
     class="categories-swiper">
     
-    <swiper-slide *ngFor="let category of categories; trackBy: trackByCategory; let i = index">
+    <swiper-slide *ngFor="let category of displayedCategories; trackBy: trackByCategory; let i = index">
       <div [routerLink]="getCategoryLink(category)"
            class="text-center cursor-pointer category-item group h-full flex flex-col items-center justify-center p-4 bg-white rounded-2xl shadow-md hover:shadow-2xl transition-all duration-500 border border-gray-100 hover:border-cyan-200"
            [class.category-hover]="enableHover">

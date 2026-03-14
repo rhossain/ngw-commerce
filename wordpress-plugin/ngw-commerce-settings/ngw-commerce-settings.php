@@ -74,8 +74,7 @@ function ngwcs_activate() {
                     'showCount'       => false,
                     'enableHover'     => true,
                     'cardStyle'       => 'elevated',
-                    'gridColumns'     => array( 'mobile' => 3, 'tablet' => 4, 'desktop' => 7 ),
-                    'gridGap'         => 24,
+                    'limit'           => 10,
                     'carouselSlidesPerView' => 'auto',
                     'carouselSpaceBetween'  => 20,
                     'carouselLoop'          => false,
@@ -170,8 +169,7 @@ function ngwcs_get_settings() {
                 'showCount'       => false,
                 'enableHover'     => true,
                 'cardStyle'       => 'elevated',
-                'gridColumns'     => array( 'mobile' => 3, 'tablet' => 4, 'desktop' => 7 ),
-                'gridGap'         => 24,
+                'limit'           => 10,
                 'carouselSlidesPerView' => 'auto',
                 'carouselSpaceBetween'  => 20,
                 'carouselLoop'          => false,
@@ -267,14 +265,6 @@ function ngwcs_update_settings( $data ) {
         // Sanitize categories_display settings
         if ( isset( $data['component_settings']['categories_display'] ) && is_array( $data['component_settings']['categories_display'] ) ) {
             $cd = $data['component_settings']['categories_display'];
-            $grid_cols = array( 'mobile' => 3, 'tablet' => 4, 'desktop' => 7 );
-            if ( isset( $cd['gridColumns'] ) && is_array( $cd['gridColumns'] ) ) {
-                $grid_cols = array(
-                    'mobile'  => isset( $cd['gridColumns']['mobile'] ) ? absint( $cd['gridColumns']['mobile'] ) : 3,
-                    'tablet'  => isset( $cd['gridColumns']['tablet'] ) ? absint( $cd['gridColumns']['tablet'] ) : 4,
-                    'desktop' => isset( $cd['gridColumns']['desktop'] ) ? absint( $cd['gridColumns']['desktop'] ) : 7,
-                );
-            }
             $clean_components['categories_display'] = array(
                 'displayStyle'    => in_array( $cd['displayStyle'] ?? '', array( 'flat-list', 'masonry-grid', 'carousel' ) ) ? $cd['displayStyle'] : 'flat-list',
                 'size'            => in_array( $cd['size'] ?? '', array( 'sm', 'md', 'lg', 'xl' ) ) ? $cd['size'] : 'md',
@@ -283,8 +273,7 @@ function ngwcs_update_settings( $data ) {
                 'showCount'       => isset( $cd['showCount'] ) ? (bool) $cd['showCount'] : false,
                 'enableHover'     => isset( $cd['enableHover'] ) ? (bool) $cd['enableHover'] : true,
                 'cardStyle'       => in_array( $cd['cardStyle'] ?? '', array( 'minimal', 'elevated', 'bordered' ) ) ? $cd['cardStyle'] : 'elevated',
-                'gridColumns'     => $grid_cols,
-                'gridGap'         => isset( $cd['gridGap'] ) ? absint( $cd['gridGap'] ) : 24,
+                'limit'           => isset( $cd['limit'] ) ? max( 1, absint( $cd['limit'] ) ) : 10,
                 'carouselSlidesPerView' => isset( $cd['carouselSlidesPerView'] ) ? sanitize_text_field( $cd['carouselSlidesPerView'] ) : 'auto',
                 'carouselSpaceBetween'  => isset( $cd['carouselSpaceBetween'] ) ? absint( $cd['carouselSpaceBetween'] ) : 20,
                 'carouselLoop'          => isset( $cd['carouselLoop'] ) ? (bool) $cd['carouselLoop'] : false,

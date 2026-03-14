@@ -57,8 +57,7 @@ export interface CategoriesDisplayConfig {
   showCount: boolean;
   enableHover: boolean;
   cardStyle: 'minimal' | 'elevated' | 'bordered';
-  gridColumns: { mobile: number; tablet: number; desktop: number };
-  gridGap: number;
+  limit: number;
   carouselSlidesPerView: string | number;
   carouselSpaceBetween: number;
   carouselLoop: boolean;
@@ -288,14 +287,6 @@ export class CommerceSettingsService {
     const cardStyle = ['minimal', 'elevated', 'bordered'].includes(raw?.cardStyle) 
       ? raw.cardStyle : 'elevated';
     
-    // Handle gridColumns (can be object with string values)
-    const gridCols = raw?.gridColumns || {};
-    const gridColumns = {
-      mobile: toNum(gridCols.mobile, 3),
-      tablet: toNum(gridCols.tablet, 4),
-      desktop: toNum(gridCols.desktop, 7)
-    };
-    
     // Handle carouselSlidesPerView (can be 'auto' or number)
     let carouselSlidesPerView: string | number = 'auto';
     if (raw?.carouselSlidesPerView === 'auto') {
@@ -313,8 +304,7 @@ export class CommerceSettingsService {
       showCount: toBool(raw?.showCount, false),
       enableHover: toBool(raw?.enableHover, true),
       cardStyle,
-      gridColumns,
-      gridGap: toNum(raw?.gridGap, 24),
+      limit: toNum(raw?.limit, 10),
       carouselSlidesPerView,
       carouselSpaceBetween: toNum(raw?.carouselSpaceBetween, 20),
       carouselLoop: toBool(raw?.carouselLoop, false),
