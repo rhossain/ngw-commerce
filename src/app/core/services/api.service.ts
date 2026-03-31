@@ -34,13 +34,15 @@ export class ApiService {
       context.set(SKIP_GLOBAL_LOADING, true);
     }
 
-    console.log('[API Service] GET Request:', {
-      url,
-      endpoint,
-      params,
-      skipLoading: options?.skipLoading,
-      fullUrl: `${url}?${httpParams.toString()}`
-    });
+    if (!environment.production) {
+      console.log('[API Service] GET Request:', {
+        url,
+        endpoint,
+        params,
+        skipLoading: options?.skipLoading,
+        fullUrl: `${url}?${httpParams.toString()}`
+      });
+    }
 
     return this.http.get<T>(url, { headers, params: httpParams, context });
   }
@@ -74,13 +76,15 @@ export class ApiService {
     const url = `${environment.apiUrl}${endpoint}`;
     const httpParams = this.buildParams(params);
     
-    console.log('[API Service] GET WP Request (Public):', {
-      url,
-      endpoint,
-      params,
-      fullUrl: `${url}?${httpParams.toString()}`
-    });
-    
+    if (!environment.production) {
+      console.log('[API Service] GET WP Request (Public):', {
+        url,
+        endpoint,
+        params,
+        fullUrl: `${url}?${httpParams.toString()}`
+      });
+    }
+
     // WordPress comments are public, don't send WooCommerce auth headers
     return this.http.get<T>(url, { 
       params: httpParams
@@ -90,8 +94,8 @@ export class ApiService {
   postWp<T>(endpoint: string, body: any): Observable<T> {
     const url = `${environment.apiUrl}${endpoint}`;
     
-    console.log('[API Service] POST WP Request:', { url, body });
-    
+    if (!environment.production) { console.log('[API Service] POST WP Request:', { url, body }); }
+
     // For creating comments, we still need some form of auth
     // But we'll let it fail gracefully if not authenticated
     return this.http.post<T>(url, body, { 
@@ -106,13 +110,15 @@ export class ApiService {
     const url = `${environment.storeApi}${endpoint}`;
     const httpParams = this.buildParams(params);
     
-    console.log('[API Service] GET Store API Request (Public):', {
-      url,
-      endpoint,
-      params,
-      fullUrl: `${url}?${httpParams.toString()}`
-    });
-    
+    if (!environment.production) {
+      console.log('[API Service] GET Store API Request (Public):', {
+        url,
+        endpoint,
+        params,
+        fullUrl: `${url}?${httpParams.toString()}`
+      });
+    }
+
     // Store API is public, no authentication needed
     return this.http.get<T>(url, { 
       params: httpParams
@@ -122,8 +128,8 @@ export class ApiService {
   postStore<T>(endpoint: string, body: any): Observable<T> {
     const url = `${environment.storeApi}${endpoint}`;
     
-    console.log('[API Service] POST Store API Request:', { url, body });
-    
+    if (!environment.production) { console.log('[API Service] POST Store API Request:', { url, body }); }
+
     // Store API public endpoint
     return this.http.post<T>(url, body, { 
       headers: new HttpHeaders({
@@ -147,11 +153,9 @@ export class ApiService {
   // Custom Reviews API methods (requires WordPress authentication)
   postReview<T>(endpoint: string, body: any): Observable<T> {
     const url = `${environment.reviewsApi}${endpoint}`;
-    console.log('[API Service] POST Custom Reviews API Request (Authenticated):', {
-      url,
-      endpoint,
-      body
-    });
+    if (!environment.production) {
+      console.log('[API Service] POST Custom Reviews API Request (Authenticated):', { url, endpoint, body });
+    }
     return this.http.post<T>(url, body, {
       headers: new HttpHeaders({
         'Content-Type': 'application/json'
@@ -162,11 +166,9 @@ export class ApiService {
 
   putReview<T>(endpoint: string, body: any): Observable<T> {
     const url = `${environment.reviewsApi}${endpoint}`;
-    console.log('[API Service] PUT Custom Reviews API Request (Authenticated):', {
-      url,
-      endpoint,
-      body
-    });
+    if (!environment.production) {
+      console.log('[API Service] PUT Custom Reviews API Request (Authenticated):', { url, endpoint, body });
+    }
     return this.http.put<T>(url, body, {
       headers: new HttpHeaders({
         'Content-Type': 'application/json'
@@ -177,10 +179,9 @@ export class ApiService {
 
   deleteReview<T>(endpoint: string): Observable<T> {
     const url = `${environment.reviewsApi}${endpoint}`;
-    console.log('[API Service] DELETE Custom Reviews API Request (Authenticated):', {
-      url,
-      endpoint
-    });
+    if (!environment.production) {
+      console.log('[API Service] DELETE Custom Reviews API Request (Authenticated):', { url, endpoint });
+    }
     return this.http.delete<T>(url, {
       withCredentials: true
     });

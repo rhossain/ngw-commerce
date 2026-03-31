@@ -107,8 +107,25 @@ export class CommerceSettingsService {
   private etag: string | null = null;
   private lastFetchTs = 0;
   private readonly STALE_MS = 60_000; // 1 minute client-side staleness window
+  private readonly LS_SETTINGS_KEY = 'ngwcs_settings_v1';
+  private readonly LS_ETAG_KEY     = 'ngwcs_settings_etag_v1';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) {
+    // Rehydrate from localStorage on startup so the first page load can skip
+    // a full server round-trip (will still revalidate cheaply via ETag/304).
+    try {
+      const stored     = localStorage.getItem(this.LS_SETTINGS_KEY);
+      const storedEtag = localStorage.getItem(this.LS_ETAG_KEY);
+      if (stored && storedEtag) {
+        this.settingsCache = JSON.parse(stored) as CommerceSettingsResponse;
+        this.etag          = storedEtag;
+        // lastFetchTs stays 0 → first call will revalidate with If-None-Match,
+        // but if the server returns 304 angular will reuse settingsCache instantly.
+      }
+    } catch {
+      // localStorage unavailable or corrupt — ignore and fetch fresh.
+    }
+  }
 
   /** Fetch settings with client-side + server ETag caching */
   fetchSettings(force = false): Observable<CommerceSettingsResponse> {
@@ -126,11 +143,17 @@ export class CommerceSettingsService {
         }),
         tap(body => {
           this.settingsCache = body;
-          this.lastFetchTs = Date.now();
+          this.lastFetchTs   = Date.now();
+          // Persist to localStorage so next page load can reuse immediately.
+          try {
+            localStorage.setItem(this.LS_SETTINGS_KEY, JSON.stringify(body));
+            if (this.etag) localStorage.setItem(this.LS_ETAG_KEY, this.etag);
+          } catch { /* quota exceeded — ignore */ }
         }),
         catchError(err => {
           // 304 Not Modified path handled here (no body) - reuse cache
           if (err.status === 304 && this.settingsCache) {
+            this.lastFetchTs = Date.now(); // reset staleness timer
             return of(this.settingsCache);
           }
           return throwError(() => err);

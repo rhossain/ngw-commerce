@@ -121,17 +121,38 @@ class NGWCS_Rest {
     }
 
     public function get_settings( WP_REST_Request $request ) {
-        $settings = ngwcs_get_settings();
-        // Optionally enrich with product/category meta (titles) maintaining order.
-    $ordered_ids = ! empty( $settings['hero_slider_order'] ) ? $settings['hero_slider_order'] : $settings['hero_slider_products'];
-    $settings['hero_slider_details'] = $this->augment_products( $ordered_ids );
-    // Increment schema version when we add/change fields so ETag busts and clients refetch body.
-    $settings['schema_version'] = 6; // v6 adds component_settings for category-products and categories-display
-        $settings['featured_category_details'] = $this->augment_categories( $settings['featured_categories'] );
-        $settings['highlighted_category_details'] = $this->augment_map( $settings['highlighted_category_map'] );
-        $settings['cache_version'] = intval( get_option( NGWCS_CACHE_VERSION_OPTION, 1 ) );
+        $ver = intval( get_option( NGWCS_CACHE_VERSION_OPTION, 1 ) );
+        $cache_key = 'ngwcs_settings_built_v' . $ver;
+
+        // Serve fully-built settings from object cache / transient to avoid repeating
+        // expensive augmentation DB queries (per-product: get_post, wc_get_product,
+        // thumbnail URL, currency lookups, etc.) on every request.
+        $settings = wp_using_ext_object_cache()
+            ? wp_cache_get( $cache_key, 'ngwcs' )
+            : get_transient( $cache_key );
+
+        if ( false === $settings ) {
+            $settings = ngwcs_get_settings();
+            // Increment schema version when we add/change fields so ETag busts and clients refetch body.
+            $settings['schema_version'] = 6; // v6 adds component_settings for category-products and categories-display
+            // Optionally enrich with product/category meta (titles) maintaining order.
+            $ordered_ids = ! empty( $settings['hero_slider_order'] ) ? $settings['hero_slider_order'] : $settings['hero_slider_products'];
+            $settings['hero_slider_details']          = $this->augment_products( $ordered_ids );
+            $settings['featured_category_details']    = $this->augment_categories( $settings['featured_categories'] );
+            $settings['highlighted_category_details'] = $this->augment_map( $settings['highlighted_category_map'] );
+            $settings['cache_version']                = $ver;
+
+            // Cache for 1 hour — automatically invalidated when cache_version bumps
+            // (on product/category save or admin settings update).
+            if ( wp_using_ext_object_cache() ) {
+                wp_cache_set( $cache_key, $settings, 'ngwcs', HOUR_IN_SECONDS );
+            } else {
+                set_transient( $cache_key, $settings, HOUR_IN_SECONDS );
+            }
+        }
+
         // Generate ETag from cache version + updated_at for efficient Angular client caching.
-    $etag = md5( $settings['cache_version'] . '|' . $settings['updated_at'] . '|' . $settings['schema_version'] );
+        $etag = md5( $settings['cache_version'] . '|' . $settings['updated_at'] . '|' . $settings['schema_version'] );
         $if_none_match = $request->get_header( 'if-none-match' );
         if ( $if_none_match && trim( $if_none_match, '"' ) === $etag ) {
             $response = new WP_REST_Response( null, 304 );
@@ -140,6 +161,7 @@ class NGWCS_Rest {
         }
         $response = new WP_REST_Response( $settings, 200 );
         $response->header( 'ETag', '"' . $etag . '"' );
+        $response->header( 'Cache-Control', 'public, max-age=300, s-maxage=300' );
         return $response;
     }
 
@@ -364,27 +386,43 @@ class NGWCS_Rest {
             'order'      => $order,
         );
 
-        $terms = get_terms( $args );
-        if ( is_wp_error( $terms ) ) {
-            return new WP_Error( 'ngwcs_terms_error', $terms->get_error_message(), array( 'status' => 500 ) );
+        $ver       = intval( get_option( NGWCS_CACHE_VERSION_OPTION, 1 ) );
+        $cache_key = 'ngwcs_categories_' . md5( serialize( array_merge( $args, array( 'ver' => $ver ) ) ) );
+        $items     = wp_using_ext_object_cache()
+            ? wp_cache_get( $cache_key, 'ngwcs' )
+            : get_transient( $cache_key );
+
+        if ( false === $items ) {
+            $terms = get_terms( $args );
+            if ( is_wp_error( $terms ) ) {
+                return new WP_Error( 'ngwcs_terms_error', $terms->get_error_message(), array( 'status' => 500 ) );
+            }
+
+            $items = array();
+            foreach ( $terms as $term ) {
+                $thumbnail_id = get_term_meta( $term->term_id, 'thumbnail_id', true );
+                $image_url    = $thumbnail_id ? wp_get_attachment_url( $thumbnail_id ) : null;
+
+                $items[] = array(
+                    'id'       => $term->term_id,
+                    'name'     => $term->name,
+                    'slug'     => $term->slug,
+                    'count'    => $term->count,
+                    'imageUrl' => $image_url,
+                    'link'     => get_term_link( $term ),
+                );
+            }
+
+            if ( wp_using_ext_object_cache() ) {
+                wp_cache_set( $cache_key, $items, 'ngwcs', 10 * MINUTE_IN_SECONDS );
+            } else {
+                set_transient( $cache_key, $items, 10 * MINUTE_IN_SECONDS );
+            }
         }
 
-        $items = array();
-        foreach ( $terms as $term ) {
-            $thumbnail_id = get_term_meta( $term->term_id, 'thumbnail_id', true );
-            $image_url = $thumbnail_id ? wp_get_attachment_url( $thumbnail_id ) : null;
-            
-            $items[] = array(
-                'id'       => $term->term_id,
-                'name'     => $term->name,
-                'slug'     => $term->slug,
-                'count'    => $term->count,
-                'imageUrl' => $image_url,
-                'link'     => get_term_link( $term ),
-            );
-        }
-
-        return new WP_REST_Response( $items, 200 );
+        $response = new WP_REST_Response( $items, 200 );
+        $response->header( 'Cache-Control', 'public, max-age=300, s-maxage=300' );
+        return $response;
     }
 
     public function list_products( WP_REST_Request $request ) {
